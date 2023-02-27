@@ -1,7 +1,6 @@
-import { InMemoryCache } from "../cache/in-memory-cache";
 import { ApiResponse } from "./api-response";
 import { ApiClient } from "../services/api-client";
-import { Client } from "../clients/client";
+import { ApiCache } from "./api-cache";
 
 interface JoystickProps {
   userId?: string;
@@ -28,22 +27,45 @@ const defaultProps: JoystickProps = {
   },
 };
 
+type ApiClientFn = (apiKey: string) => ApiClient;
+
+type InitProps = {
+  [Property in keyof JoystickProps]: JoystickProps[Property];
+};
+
+/**
+ *
+ */
 export class Joystick {
   private _props: JoystickProps = defaultProps;
-  private _cache: InMemoryCache<ApiResponse> | undefined;
+  private _cache?: ApiCache;
 
-  private _apiClient: ApiClient | undefined;
-  private _fnApiClient: (apiKey: string) => ApiClient;
+  private _apiClient?: ApiClient;
+  
+  private readonly _fnApiClient: ApiClientFn;
 
-  constructor(
-    fnApiClient: (apiKey: string) => ApiClient = (apiKey) =>
-      new ApiClient(new Client(apiKey))
-  ) {
+  constructor(fnApiClient: ApiClientFn = (apiKey) => new ApiClient(apiKey)) {
     this._fnApiClient = fnApiClient;
   }
 
-  init(props: JoystickProps) {
+  init(props: InitProps) {
     this._props = { ...this._props, ...props };
+
+    this.clearCache();
+  }
+
+  getParams(): Record<string, any> {
+    return this._props.params || {};
+  }
+
+  setParams(params: Record<string, any>) {
+    this._props.params = params;
+
+    this.clearCache();
+  }
+
+  setParamValue(key: string, value: any) {
+    this.getParams()[key] = value;
 
     this.clearCache();
   }
@@ -61,18 +83,14 @@ export class Joystick {
   }
 
   clearCache(): void {
-    this._cache = new InMemoryCache<ApiResponse>(this.getCacheLength());
-
-    const apiKey = this.getApiKey();
-
-    this._apiClient = apiKey ? this._fnApiClient(apiKey) : undefined;
+    this._cache = undefined;
   }
 
   async getContent(
     contentId: string,
     options?: ContentOptions
   ): Promise<Record<string, ApiResponse> | undefined> {
-    const content = this._cache?.get(contentId);
+    const content = this.getCache().get(contentId);
 
     if (content) {
       return {
@@ -97,7 +115,7 @@ export class Joystick {
       return;
     }
 
-    this._cache?.set(contentId, freshContent);
+    this.getCache().set(contentId, freshContent);
 
     return {
       [contentId]: freshContent,
@@ -109,13 +127,13 @@ export class Joystick {
     options?: ContentOptions
   ): Promise<Record<string, ApiResponse> | undefined> {
     return contentIds.reduce((result, contentId) => {
-      const content = this._cache?.get(contentId);
+      const content = this.getCache().get(contentId);
 
       if (!content) {
         return result;
       }
 
-      this._cache?.set(contentId, content);
+      this.getCache().set(contentId, content);
 
       return {
         ...result,
@@ -130,9 +148,23 @@ export class Joystick {
     this.clearCache();
   }
 
+  private getCache(): ApiCache {
+    if (!this._cache) {
+      this._cache = new ApiCache(this.getCacheLength());
+    }
+
+    return this._cache;
+  }
+
   private getApiClient(): ApiClient {
     if (!this._apiClient) {
-      throw new Error("Please provide an API Key before calling getContent");
+      const apiKey = this.getApiKey();
+
+      if (!apiKey) {
+        throw new Error("Please provide an API Key before calling getContent.");
+      }
+
+      this._apiClient = this._fnApiClient(apiKey);
     }
 
     return this._apiClient;

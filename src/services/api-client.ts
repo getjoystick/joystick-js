@@ -1,4 +1,5 @@
-import { Client } from "../clients/client";
+import { HttpClient } from "../internals/client/http-client";
+import { ApiResponse } from "../models/api-response";
 
 export interface Payload {
   userId?: string;
@@ -7,10 +8,10 @@ export interface Payload {
 }
 
 export class ApiClient {
-  private _client: Client;
+  private readonly _client: HttpClient<ApiResponse>;
 
-  constructor(client: Client) {
-    this._client = client;
+  constructor(apiKey: string) {
+    this._client = new HttpClient(apiKey);
   }
 
   async getContent(
@@ -21,11 +22,34 @@ export class ApiClient {
     return await this._client.post(
       `/config/${contentId}/dynamic`,
       {
-        u: payload.userId,
+        u: payload.userId ?? "",
         v: payload.semVer,
         p: payload.params,
       },
       { responseType }
+    );
+  }
+
+  async getContents(
+    contentIds: string[],
+    payload: Payload,
+    options?: {
+      responseType: "serialized";
+      dynamic: true;
+    }
+  ): Promise<Record<string, any>> {
+    return await this._client.post(
+      `/combine`,
+      {
+        u: payload.userId ?? "",
+        v: payload.semVer,
+        p: payload.params,
+      },
+      {
+        c: contentIds,
+        dynamic: options?.dynamic,
+        responseType: options?.responseType,
+      }
     );
   }
 }

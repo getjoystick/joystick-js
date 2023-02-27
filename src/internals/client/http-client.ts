@@ -1,16 +1,16 @@
 import axios, { AxiosInstance } from "axios";
-import { ApiResponse } from "../models/api-response";
+import { applyRetryLogic } from "./retry-logic";
 
 const { JOYSTICK_TIMEOUT_MS, JOYSTICK_BASE_URL } = process.env;
 
 const baseUrl = JOYSTICK_BASE_URL || "https://api.getjoystick.com/api/v1";
 const timeout = parseInt(JOYSTICK_TIMEOUT_MS || "2_500");
 
-export class Client {
-  private instance: AxiosInstance;
+export class HttpClient<ResponseType> {
+  private readonly _instance: AxiosInstance;
 
   constructor(apiKey: string) {
-    this.instance = axios.create({
+    this._instance = axios.create({
       baseURL: baseUrl,
       timeout: timeout,
       headers: {
@@ -21,14 +21,16 @@ export class Client {
       responseEncoding: "UTF-8",
       responseType: "json",
     });
+
+    applyRetryLogic(this._instance);
   }
 
   async post(
     urlPath: string,
     data: Record<string, any>,
     params?: Record<string, any>
-  ): Promise<ApiResponse> {
-    const result = await this.instance.post(urlPath, data, {
+  ): Promise<ResponseType> {
+    const result = await this._instance.post(urlPath, data, {
       params,
     });
 

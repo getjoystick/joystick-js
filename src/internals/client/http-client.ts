@@ -6,7 +6,7 @@ const { JOYSTICK_TIMEOUT_MS, JOYSTICK_BASE_URL } = process.env;
 const baseUrl = JOYSTICK_BASE_URL || "https://api.getjoystick.com/api/v1";
 const timeout = parseInt(JOYSTICK_TIMEOUT_MS || "2_500");
 
-export class HttpClient<ResponseType> {
+export class HttpClient {
   private readonly _instance: AxiosInstance;
 
   constructor(apiKey: string) {
@@ -25,7 +25,7 @@ export class HttpClient<ResponseType> {
     applyRetryLogic(this._instance);
   }
 
-  async post(
+  async post<ResponseType>(
     urlPath: string,
     data: Record<string, any>,
     params?: Record<string, any>

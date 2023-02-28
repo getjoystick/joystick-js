@@ -7,8 +7,11 @@ export interface Payload {
   params?: Record<string, any>;
 }
 
+/**
+ * API Client to getContent, using REST protocol
+ */
 export class ApiClient {
-  private readonly _client: HttpClient<ApiResponse>;
+  private readonly _client: HttpClient;
 
   constructor(apiKey: string) {
     this._client = new HttpClient(apiKey);
@@ -18,7 +21,7 @@ export class ApiClient {
     contentId: string,
     payload: Payload,
     responseType?: "serialized"
-  ) {
+  ): Promise<ApiResponse> {
     return await this._client.post(
       `/config/${contentId}/dynamic`,
       {
@@ -34,10 +37,10 @@ export class ApiClient {
     contentIds: string[],
     payload: Payload,
     options?: {
-      responseType: "serialized";
+      responseType?: "serialized";
       dynamic: true;
     }
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, ApiResponse>> {
     return await this._client.post(
       `/combine`,
       {

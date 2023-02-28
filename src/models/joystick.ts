@@ -29,19 +29,17 @@ const defaultProps: JoystickProps = {
 
 type ApiClientFn = (apiKey: string) => ApiClient;
 
-type InitProps = {
-  [Property in keyof JoystickProps]: JoystickProps[Property];
-};
+type InitProps = JoystickProps & Required<Pick<JoystickProps, "apiKey">>;
 
 /**
- *
+ * Main class
  */
 export class Joystick {
   private _props: JoystickProps = defaultProps;
   private _cache?: ApiCache;
 
   private _apiClient?: ApiClient;
-  
+
   private readonly _fnApiClient: ApiClientFn;
 
   constructor(fnApiClient: ApiClientFn = (apiKey) => new ApiClient(apiKey)) {
@@ -76,6 +74,16 @@ export class Joystick {
 
   getUserId(): string | undefined {
     return this._props.userId;
+  }
+
+  getSemVer(): string | undefined {
+    return this._props.semVer;
+  }
+
+  setSemVer(semVer: string) {
+    this._props.semVer = semVer;
+
+    this.clearCache();
   }
 
   getCacheLength(): number {
@@ -125,21 +133,31 @@ export class Joystick {
   async getContents(
     contentIds: string[],
     options?: ContentOptions
-  ): Promise<Record<string, ApiResponse> | undefined> {
-    return contentIds.reduce((result, contentId) => {
-      const content = this.getCache().get(contentId);
+  ): Promise<Record<string, ApiResponse | undefined>> {
+    const cached = contentIds.map((contentId) => {
+      return { [contentId]: this.getCache().get(contentId) };
+    });
 
-      if (!content) {
-        return result;
+    const missingContentIds = Object.entries(cached)
+      .filter(([_, value]) => !!value)
+      .map(([key]) => key);
+
+    const freshContent = await this.getApiClient().getContents(
+      missingContentIds,
+      {
+        ...this._props,
       }
+    );
 
-      this.getCache().set(contentId, content);
+    if (freshContent) {
+      Object.entries(freshContent).forEach(([contentId, content]) => {
+        this.getCache().set(contentId, content);
+      });
+    }
 
-      return {
-        ...result,
-        [contentId]: content,
-      };
-    }, {} as Record<string, ApiResponse>);
+    return contentIds.reduce((result, contentId) => {
+      return { ...result, [contentId]: this.getCache().get(contentId) };
+    }, {} as Record<string, ApiResponse | undefined>);
   }
 
   setApiKey(apiKey: string) {

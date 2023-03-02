@@ -17,6 +17,12 @@ export class ApiClient {
     this._client = client;
   }
 
+  /**
+   * Gets the contents from Joystick API.
+   *
+   * The data is requested with dynamic=true&responseType=serialized to guarantee a raw format on cache
+   * All the transformations occur after retrieve the data from the cache.
+   */
   async getDynamicContent(
     contentIds: string[],
     payload: Payload

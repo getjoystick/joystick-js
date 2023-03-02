@@ -1,6 +1,6 @@
 interface Value<T> {
   data: T;
-  cached_at_timestap: number;
+  cached_at_timestap_in_ms: number;
 }
 
 /**
@@ -12,22 +12,25 @@ export class InMemoryCache<ValueType> {
     string,
     Value<ValueType>
   >();
-  private readonly _cacheLengthInMinutes: number;
+  private readonly _cacheExpirationInSeconds: number;
   private readonly _nowFn: () => number;
 
   /**
-   * @param cacheLengthInMinutes The number of minutes that the cache should be kept.
+   * @param cacheExpirationInSeconds The number of seconds that the cache should be kept.
    * @param nowFn
    */
-  constructor(cacheLengthInMinutes: number, nowFn: () => number = Date.now) {
-    this._cacheLengthInMinutes = cacheLengthInMinutes;
+  constructor(
+    cacheExpirationInSeconds: number,
+    nowFn: () => number = Date.now
+  ) {
+    this._cacheExpirationInSeconds = cacheExpirationInSeconds;
     this._nowFn = nowFn;
   }
 
   set(key: string, value: ValueType) {
     this._cache.set(key, {
       data: value,
-      cached_at_timestap: this._nowFn(),
+      cached_at_timestap_in_ms: this._nowFn(),
     });
   }
 
@@ -36,8 +39,7 @@ export class InMemoryCache<ValueType> {
 
     if (
       !result ||
-      !result.cached_at_timestap ||
-      result.cached_at_timestap + this._cacheLengthInMinutes * 60 * 1_000 <
+      result.cached_at_timestap_in_ms + this._cacheExpirationInSeconds * 1_000 <
         this._nowFn()
     ) {
       return undefined;

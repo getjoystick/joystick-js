@@ -5,7 +5,7 @@ export interface Meta {
 }
 
 export interface ApiResponse {
-  data: Record<string, any> | string;
+  data: string;
   hash: string;
   meta: Meta;
 }

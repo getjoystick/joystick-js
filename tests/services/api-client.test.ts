@@ -6,7 +6,9 @@ describe("ApiClient", () => {
 
     const sut = new ApiClient(apiKey);
 
-    expect(await sut.getContent("123456789012345678901234567", {})).toEqual({
+    expect(
+      await sut.getDynamicContent(["123456789012345678901234567"], {})
+    ).toEqual({
       data: {
         content: {
           id: "1234567890",

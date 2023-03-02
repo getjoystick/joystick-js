@@ -1,15 +1,16 @@
 import { ApiResponse } from "./api-response";
 import { ApiClient } from "../services/api-client";
 import { ApiCache } from "./api-cache";
+import { HttpClient } from "../internals/client/http-client";
 
 interface JoystickProps {
   userId?: string;
-  apiKey?: string;
+  apiKey: string;
   semVer?: string;
   params?: Record<string, any>;
   options?: {
-    cacheLength?: number;
-    serialize?: boolean;
+    cacheExpirationInSeconds?: number;
+    serialized?: boolean;
   };
 }
 
@@ -19,56 +20,28 @@ interface ContentOptions {
   fullResponse: boolean;
 }
 
-const DEFAULT_CACHE_LENGTH_IN_MINUTES = 10;
-
-const defaultProps: JoystickProps = {
-  options: {
-    cacheLength: DEFAULT_CACHE_LENGTH_IN_MINUTES,
-  },
-};
+const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
 type ApiClientFn = (apiKey: string) => ApiClient;
-
-type InitProps = JoystickProps & Required<Pick<JoystickProps, "apiKey">>;
 
 /**
  * Main class
  */
 export class Joystick {
-  private _props: JoystickProps = defaultProps;
+  private readonly _props: JoystickProps;
+  private readonly _apiClient: ApiClient;
   private _cache?: ApiCache;
 
-  private _apiClient?: ApiClient;
+  constructor(
+    initialProps: JoystickProps,
+    fnApiClient: ApiClientFn = (apiKey) => new ApiClient(new HttpClient(apiKey))
+  ) {
+    this._props = initialProps;
 
-  private readonly _fnApiClient: ApiClientFn;
-
-  constructor(fnApiClient: ApiClientFn = (apiKey) => new ApiClient(apiKey)) {
-    this._fnApiClient = fnApiClient;
+    this._apiClient = fnApiClient(this.getApiKey());
   }
 
-  init(props: InitProps) {
-    this._props = { ...this._props, ...props };
-
-    this.clearCache();
-  }
-
-  getParams(): Record<string, any> {
-    return this._props.params || {};
-  }
-
-  setParams(params: Record<string, any>) {
-    this._props.params = params;
-
-    this.clearCache();
-  }
-
-  setParamValue(key: string, value: any) {
-    this.getParams()[key] = value;
-
-    this.clearCache();
-  }
-
-  getApiKey(): string | undefined {
+  getApiKey(): string {
     return this._props.apiKey;
   }
 
@@ -80,14 +53,21 @@ export class Joystick {
     return this._props.semVer;
   }
 
-  setSemVer(semVer: string) {
+  setSemVer(semVer: string | undefined) {
     this._props.semVer = semVer;
 
     this.clearCache();
   }
 
-  getCacheLength(): number {
-    return this._props.options?.cacheLength || DEFAULT_CACHE_LENGTH_IN_MINUTES;
+  getParams(): Record<string, any> {
+    return this._props.params || {};
+  }
+
+  getCacheExpirationInSeconds(): number {
+    return (
+      this._props.options?.cacheExpirationInSeconds ||
+      DEFAULT_CACHE_EXPIRATION_IN_SECONDS
+    );
   }
 
   clearCache(): void {
@@ -97,56 +77,21 @@ export class Joystick {
   async getContent(
     contentId: string,
     options?: ContentOptions
-  ): Promise<Record<string, ApiResponse> | undefined> {
-    const content = this.getCache().get(contentId);
-
-    if (content) {
-      return {
-        [contentId]: content,
-      };
-    }
-
-    const responseType =
-      options?.serialized ?? this._props.options?.serialize
-        ? "serialized"
-        : undefined;
-
-    const freshContent = await this.getApiClient().getContent(
-      contentId,
-      {
-        ...this._props,
-      },
-      responseType
-    );
-
-    if (!freshContent) {
-      return;
-    }
-
-    this.getCache().set(contentId, freshContent);
-
-    return {
-      [contentId]: freshContent,
-    };
+  ): Promise<Record<string, ApiResponse | undefined>> {
+    return this.getContents([contentId], options);
   }
 
   async getContents(
     contentIds: string[],
     options?: ContentOptions
   ): Promise<Record<string, ApiResponse | undefined>> {
-    const cached = contentIds.map((contentId) => {
-      return { [contentId]: this.getCache().get(contentId) };
-    });
+    const missingContentIdsFromCache = options?.refresh
+      ? contentIds
+      : contentIds.filter((contentId) => !this.getCache().get(contentId));
 
-    const missingContentIds = Object.entries(cached)
-      .filter(([_, value]) => !!value)
-      .map(([key]) => key);
-
-    const freshContent = await this.getApiClient().getContents(
-      missingContentIds,
-      {
-        ...this._props,
-      }
+    const freshContent = await this._apiClient.getDynamicContent(
+      missingContentIdsFromCache,
+      this._props
     );
 
     if (freshContent) {
@@ -155,36 +100,52 @@ export class Joystick {
       });
     }
 
+    const isSerializedActive =
+      options?.serialized ?? this._props.options?.serialized;
+
     return contentIds.reduce((result, contentId) => {
-      return { ...result, [contentId]: this.getCache().get(contentId) };
-    }, {} as Record<string, ApiResponse | undefined>);
+      const content = this.getCache().get(contentId);
+
+      return {
+        ...result,
+        [contentId]: this.formatContent(
+          content,
+          isSerializedActive,
+          options?.fullResponse
+        ),
+      };
+    }, {});
   }
 
-  setApiKey(apiKey: string) {
-    this._props.apiKey = apiKey;
+  private formatContent(
+    content: ApiResponse | undefined,
+    isSerializedActive: boolean | undefined,
+    fullResponse: boolean | undefined
+  ) {
+    if (!content) {
+      return {};
+    }
 
-    this.clearCache();
+    const { data, meta, hash } = content;
+
+    const massagedData = isSerializedActive ? data : JSON.parse(data);
+
+    if (!fullResponse) {
+      return massagedData;
+    }
+
+    return {
+      data: massagedData,
+      hash,
+      meta,
+    };
   }
 
   private getCache(): ApiCache {
     if (!this._cache) {
-      this._cache = new ApiCache(this.getCacheLength());
+      this._cache = new ApiCache(this.getCacheExpirationInSeconds());
     }
 
     return this._cache;
-  }
-
-  private getApiClient(): ApiClient {
-    if (!this._apiClient) {
-      const apiKey = this.getApiKey();
-
-      if (!apiKey) {
-        throw new Error("Please provide an API Key before calling getContent.");
-      }
-
-      this._apiClient = this._fnApiClient(apiKey);
-    }
-
-    return this._apiClient;
   }
 }

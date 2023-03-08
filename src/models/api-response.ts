@@ -9,3 +9,9 @@ export interface ApiResponse {
   hash: string;
   meta: Meta;
 }
+
+export interface ApiResponseError {
+  errors: Record<string, any>;
+  title: string;
+  status: number;
+}

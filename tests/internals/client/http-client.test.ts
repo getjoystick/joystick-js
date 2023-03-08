@@ -7,9 +7,11 @@ describe("HttpClient", () => {
   });
 
   it("post", async () => {
-    const sut = new HttpClient("api.key");
+    const sut = new HttpClient("api.key", console);
 
     const name = "name";
+
+    mockAxios.post("/ping").resolve("pong");
 
     await sut.post("/ping", { name });
 

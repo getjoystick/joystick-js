@@ -3,6 +3,7 @@
  */
 
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import { ILogger } from "../logger/ILogger";
 
 const denyList = new Set([
   "ENOTFOUND",
@@ -132,20 +133,22 @@ async function shouldRetry(
   return shouldRetryOrPromise;
 }
 
-export function applyRetryLogic(instance: AxiosInstance) {
-  instance.interceptors.request.use((config) => {
+export function applyRetryLogic(client: AxiosInstance, logger: ILogger) {
+  client.interceptors.request.use((config) => {
     const currentState = getCurrentState(config as RetryConfig);
     currentState.lastRequestTime = Date.now();
     return config;
   });
 
-  instance.interceptors.response.use(null, async (error: AxiosError) => {
+  client.interceptors.response.use(null, async (error: AxiosError) => {
     const { config } = error;
 
     // If we have no information to retry the request
     if (!config) {
       return Promise.reject(error);
     }
+
+    logger.error(error);
 
     const retryConfig = config as RetryConfig;
 
@@ -185,7 +188,7 @@ export function applyRetryLogic(instance: AxiosInstance) {
     onRetry(currentState.retryCount, error, retryConfig);
 
     return new Promise((resolve) =>
-      setTimeout(() => resolve(instance(config)), delay)
+      setTimeout(() => resolve(client(config)), delay)
     );
   });
 }

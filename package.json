@@ -10,7 +10,9 @@
   ],
   "scripts": {
     "build": "tsup --format=esm,cjs --minify",
+    "pretest": "npm run build",
     "test": "jest",
+    "prepatch": "npm test",
     "patch": "npm version patch",
     "publish": "npm publish"
   },
@@ -18,6 +20,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^29.4.0",
+    "axios-mock-adapter": "^1.21.2",
     "dotenv": "^16.0.3",
     "jest": "^29.4.3",
     "prettier": "^2.8.4",

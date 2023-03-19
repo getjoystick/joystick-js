@@ -1,17 +1,15 @@
-import { HttpClient } from "../internals/client/http-client";
 import { ApiResponse, ApiResponseError } from "../models/api-response";
 import { Payload } from "../models/payload";
 import { ApiError } from "../errors/ApiError";
+import { ILogger } from "../internals/logger/i-logger";
+import { IApiClient } from "./i-api-client";
+import { IHttpClient } from "../internals/client/i-http-client";
 
 /**
  * API Client to getContents, using REST protocol
  */
-export class ApiClient {
-  private readonly _client: HttpClient;
-
-  constructor(client: HttpClient) {
-    this._client = client;
-  }
+export class ApiClient implements IApiClient {
+  constructor(private client: IHttpClient, private logger: ILogger) {}
 
   /**
    * Gets the contents from Joystick API.
@@ -26,7 +24,7 @@ export class ApiClient {
     payload: Payload
   ): Promise<Record<string, ApiResponse>> {
     const response: Record<string, ApiResponse | ApiResponseError> =
-      await this._client.post(
+      await this.client.post(
         `/combine/`,
         {
           u: payload.userId ?? "",
@@ -34,13 +32,15 @@ export class ApiClient {
           p: payload.params,
         },
         {
-          c: `[${contentIds.map((contentId) => `"${contentId}"`).join(",")}]`,
-          dynamic: true,
+          c: JSON.stringify(contentIds),
+          dynamic: "true",
           responseType: "serialized",
         }
       );
 
     return Object.entries(response).reduce((acc, [key, value]) => {
+      this.logger.debug({ value });
+
       if (ApiError.isApiResponseError(value)) {
         throw new ApiError(value);
       }

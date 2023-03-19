@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "run": "ts-node ./src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +14,8 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@getjoystick/vanilla-js": "../.."
+    "@getjoystick/vanilla-js": "../..",
+    "dotenv": "^16.0.3",
+    "node-cache": "^5.1.2"
   }
 }

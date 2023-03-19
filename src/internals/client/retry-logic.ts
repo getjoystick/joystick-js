@@ -3,7 +3,7 @@
  */
 
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import { ILogger } from "../logger/ILogger";
+import { ILogger } from "../logger/i-logger";
 
 const denyList = new Set([
   "ENOTFOUND",

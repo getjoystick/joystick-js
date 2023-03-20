@@ -1,4 +1,5 @@
 import { ICache } from "./i-cache";
+import { ILogger } from "../logger/i-logger";
 
 interface Value<ValueType> {
   data: ValueType;
@@ -18,11 +19,13 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
 
   /**
    * @param cacheExpirationInSeconds
+   * @param logger
    * @param maxItemsInCache The max number of items in cache. Should be positive.
    * @param nowFn now function. Used for testing or custom implementation.
    */
   constructor(
     cacheExpirationInSeconds: number,
+    private logger: ILogger,
     maxItemsInCache: number = 1_000,
     nowFn: () => number = Date.now
   ) {
@@ -81,12 +84,14 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
 
     const keysToDelete = [...this.cache.entries()]
       .sort(
-        ([, left], [, right]) =>
-          right.last_accessed_at_timestap_in_ms -
-          left.last_accessed_at_timestap_in_ms
+        ([, leftValue], [, rightValue]) =>
+          rightValue.last_accessed_at_timestap_in_ms -
+          leftValue.last_accessed_at_timestap_in_ms
       )
       .slice(this.maxItemsInCache)
       .map(([key]) => key);
+
+    this.logger.debug({ keysToDelete }, "checkLruMaxSize");
 
     keysToDelete.forEach((key) => this.cache.delete(key));
   }
@@ -94,8 +99,7 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
   private validateCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
     if (cacheExpirationInSeconds <= 0) {
       throw new Error(
-        "cacheExpirationInSeconds should be greater than 0. Got " +
-          cacheExpirationInSeconds
+        `Invalid cacheExpirationInSeconds: ${cacheExpirationInSeconds}. It should be greater than 0.`
       );
     }
   }
@@ -103,7 +107,7 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
   private validateMaxItemsInCache(maxItemsInCache: number) {
     if (maxItemsInCache < 1) {
       throw new Error(
-        "maxItemsInCache should be greater than 0. Got " + maxItemsInCache
+        `Invalid maxItemsInCache: ${maxItemsInCache}. It should be greater than 0.`
       );
     }
   }

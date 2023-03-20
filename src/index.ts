@@ -7,8 +7,8 @@ import { IApiClient } from "./clients/i-api-client";
 import { ILogger } from "./internals/logger/i-logger";
 import { HttpClient } from "./internals/client/http-client";
 import { InMemoryCache } from "./internals/cache/in-memory-cache";
-import { sha256ToHex } from "./hash/sha256ToHex";
 import { SdkLogger } from "./internals/logger/sdk-logger";
+import { sha256ToHex } from "./internals/hash/sha256ToHex";
 
 const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
@@ -66,7 +66,8 @@ export class Joystick {
     this.cache =
       cache ??
       new InMemoryCache<Record<string, ApiResponse>>(
-        this.getCacheExpirationInSeconds()
+        this.getCacheExpirationInSeconds(),
+        this.logger
       );
   }
 

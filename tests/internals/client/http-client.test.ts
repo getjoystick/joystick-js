@@ -2,8 +2,9 @@ import { HttpClient } from "../../../src/internals/client/http-client";
 import MockAdapter from "axios-mock-adapter";
 import axios from "axios";
 import { ApiResponseError } from "../../../src/models/api-response";
+import { SdkLogger } from "../../../src/internals/logger/sdk-logger";
 
-describe("HttpClient", () => {
+describe("test HttpClient", () => {
   let mock: MockAdapter;
 
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe("HttpClient", () => {
   });
 
   it("post", async () => {
-    const sut = new HttpClient("api.key", console);
+    const sut = new HttpClient("api.key", new SdkLogger());
 
     const name = "name";
 
@@ -34,7 +35,7 @@ describe("HttpClient", () => {
     const errorForbidden =
       'Error 401,  https://api.getjoystick.com/api/v1/config/123456789012345678901234567/dynamic?responsetype=serialized {"Data":false,"Status":4,"Message":"Forbidden","Details":null}.';
 
-    const sut = new HttpClient("api.key", console);
+    const sut = new HttpClient("api.key", new SdkLogger());
 
     mock.onPost("/ping").reply(200, { key: errorForbidden });
 

@@ -11,25 +11,19 @@ import { IHttpClient } from "../internals/client/i-http-client";
 export class ApiClient implements IApiClient {
   constructor(private client: IHttpClient, private logger: ILogger) {}
 
-  /**
-   * Gets the contents from Joystick API.
-   *
-   * The data is requested with dynamic=true&responseType=serialized to guarantee a raw format on cache
-   *
-   * All the transformations occur after retrieve the data from the cache.
-   *
-   */
   async getDynamicContent(
     contentIds: string[],
     payload: Payload
   ): Promise<Record<string, ApiResponse>> {
+    const { params, semVer, userId } = payload;
+
     const response: Record<string, ApiResponse | ApiResponseError> =
       await this.client.post(
         `/combine/`,
         {
-          u: payload.userId ?? "",
-          v: payload.semVer,
-          p: payload.params,
+          u: userId ?? "",
+          v: semVer,
+          p: params,
         },
         {
           c: JSON.stringify(contentIds),
@@ -39,9 +33,9 @@ export class ApiClient implements IApiClient {
       );
 
     return Object.entries(response).reduce((acc, [key, value]) => {
-      this.logger.debug({ value });
-
       if (ApiError.isApiResponseError(value)) {
+        this.logger.error(value);
+
         throw new ApiError(value);
       }
 

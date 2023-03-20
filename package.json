@@ -17,7 +17,7 @@
     "publish": "npm publish"
   },
   "author": "getjoystick",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.4.0",
     "axios-mock-adapter": "^1.21.2",

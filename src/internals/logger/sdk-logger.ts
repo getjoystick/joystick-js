@@ -1,6 +1,6 @@
-import { ILogger } from "./i-logger";
+import { Logger } from "./logger";
 
-export class SdkLogger implements ILogger {
+export class SdkLogger implements Logger {
   debug(...data: unknown[]): void {
     this.shouldLog("debug") && console.debug(...data);
   }

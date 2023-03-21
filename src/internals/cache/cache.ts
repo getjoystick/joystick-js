@@ -1,4 +1,4 @@
-export interface ICache<ValueType> {
+export interface Cache<ValueType> {
   clear(): void;
 
   set(key: string, value: ValueType): void;

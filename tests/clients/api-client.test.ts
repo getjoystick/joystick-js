@@ -1,11 +1,11 @@
-import { ApiClient } from "../../src/clients/api-client";
-import { HttpClient } from "../../src/internals/client/http-client";
+import { ApiClient } from "../../src/clients/joystick-api-client";
+import { AxiosClient } from "../../src/internals/client/axios-client";
 
 describe("ApiClient", () => {
   it("getContent", async () => {
     const apiKey = "apiKey";
 
-    const sut = new ApiClient(new HttpClient(apiKey, console), console);
+    const sut = new ApiClient(new AxiosClient(apiKey, console), console);
 
     expect(
       await sut.getDynamicContent(["123456789012345678901234567"], {

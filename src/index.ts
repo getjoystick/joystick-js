@@ -1,14 +1,14 @@
-import { ApiClient } from "./clients/api-client";
 import { ContentOptions } from "./models/content-options";
 import { ApiResponse } from "./models/api-response";
 import { Properties } from "./models/properties";
-import { ICache } from "./internals/cache/i-cache";
-import { IApiClient } from "./clients/i-api-client";
-import { ILogger } from "./internals/logger/i-logger";
-import { HttpClient } from "./internals/client/http-client";
+import { Cache } from "./internals/cache/cache";
+import { Logger } from "./internals/logger/logger";
+import { AxiosClient } from "./internals/client/axios-client";
 import { InMemoryCache } from "./internals/cache/in-memory-cache";
 import { SdkLogger } from "./internals/logger/sdk-logger";
-import { sha256ToHex } from "./internals/hash/sha256ToHex";
+import { sha256ToHex } from "./internals/hash/sha256-to-hex";
+import { ApiClient } from "./clients/api-client";
+import { JoystickApiClient } from "./clients/joystick-api-client";
 
 const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
@@ -19,9 +19,9 @@ const SEM_VER_REG_EXP = new RegExp(/^[0-9]+.[0-9]+.[0-9]+$/);
  */
 export class Joystick {
   private readonly properties: Properties;
-  private readonly apiClient: IApiClient;
-  private readonly cache: ICache<Record<string, ApiResponse>>;
-  private readonly logger: ILogger;
+  private readonly apiClient: ApiClient;
+  private readonly cache: Cache<Record<string, ApiResponse>>;
+  private readonly logger: Logger;
 
   /**
    * Initialize the class with default values.
@@ -45,9 +45,9 @@ export class Joystick {
     cache,
   }: {
     properties: Properties;
-    apiClient?: IApiClient;
-    logger?: ILogger;
-    cache?: ICache<Record<string, ApiResponse>>;
+    apiClient?: ApiClient;
+    logger?: Logger;
+    cache?: Cache<Record<string, ApiResponse>>;
   }) {
     const { semVer, userId, apiKey } = properties;
 
@@ -61,14 +61,20 @@ export class Joystick {
 
     this.apiClient =
       apiClient ??
-      new ApiClient(new HttpClient(this.getApiKey(), this.logger), this.logger);
+      new JoystickApiClient({
+        client: new AxiosClient({
+          apiKey: this.getApiKey(),
+          logger: this.logger,
+        }),
+        logger: this.logger,
+      });
 
     this.cache =
       cache ??
-      new InMemoryCache<Record<string, ApiResponse>>(
-        this.getCacheExpirationInSeconds(),
-        this.logger
-      );
+      new InMemoryCache<Record<string, ApiResponse>>({
+        cacheExpirationInSeconds: this.getCacheExpirationInSeconds(),
+        logger: this.logger,
+      });
   }
 
   /**
@@ -161,10 +167,11 @@ export class Joystick {
     if (cachedData) {
       return cachedData;
     }
-    const freshContent = await this.apiClient.getDynamicContent(
+    const freshContent = await this.apiClient.getDynamicContent({
       contentIds,
-      this.properties
-    );
+      payload: this.properties,
+      responseType: options?.serialized ? "serialized" : undefined,
+    });
 
     this.cache.set(cacheKey, freshContent);
 

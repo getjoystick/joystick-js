@@ -1,8 +1,8 @@
-import { Payload } from "../../src/models/payload";
+import { GetDynamicContentPayload } from "../../src/models/get-dynamic-content-payload";
 
 describe("Payload", () => {
   it("init", () => {
-    const sut: Payload = {
+    const sut: GetDynamicContentPayload = {
       userId: "required-user-id",
       semVer: "required-semver",
       params: {},

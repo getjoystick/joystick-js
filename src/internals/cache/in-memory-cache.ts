@@ -1,38 +1,39 @@
-import { ICache } from "./i-cache";
-import { ILogger } from "../logger/i-logger";
+import { Cache } from "./cache";
+import { Logger } from "../logger/logger";
 
 interface Value<ValueType> {
-  data: ValueType;
-  cached_at_timestap_in_ms: number;
-  last_accessed_at_timestap_in_ms: number;
+  value: ValueType;
+  cachedAtTimestampInMs: number;
+  lastAccessedAtTimestampInMs: number;
 }
 
 /**
  * A class used to cache values in memory.
  * @overview A simple implementation to avoid dependencies
  */
-export class InMemoryCache<ValueType> implements ICache<ValueType> {
+export class InMemoryCache<ValueType> implements Cache<ValueType> {
   private readonly cache: Map<string, Value<ValueType>>;
-  private cacheExpirationInSeconds: number;
+  private cacheExpirationInMs: number;
+  private readonly logger: Logger;
   private readonly maxItemsInCache: number;
   private readonly nowFn: () => number;
 
-  /**
-   * @param cacheExpirationInSeconds
-   * @param logger
-   * @param maxItemsInCache The max number of items in cache. Should be positive.
-   * @param nowFn now function. Used for testing or custom implementation.
-   */
-  constructor(
-    cacheExpirationInSeconds: number,
-    private logger: ILogger,
-    maxItemsInCache: number = 1_000,
-    nowFn: () => number = Date.now
-  ) {
+  constructor({
+    cacheExpirationInSeconds,
+    logger,
+    maxItemsInCache = 1_000,
+    nowFn = Date.now,
+  }: {
+    cacheExpirationInSeconds: number;
+    logger: Logger;
+    maxItemsInCache?: number;
+    nowFn?: () => number;
+  }) {
     this.validateCacheExpirationInSeconds(cacheExpirationInSeconds);
     this.validateMaxItemsInCache(maxItemsInCache);
 
-    this.cacheExpirationInSeconds = cacheExpirationInSeconds;
+    this.cacheExpirationInMs = cacheExpirationInSeconds * 1_000;
+    this.logger = logger;
     this.maxItemsInCache = maxItemsInCache;
     this.nowFn = nowFn;
 
@@ -42,7 +43,7 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
   setCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
     this.validateCacheExpirationInSeconds(cacheExpirationInSeconds);
 
-    this.cacheExpirationInSeconds = cacheExpirationInSeconds;
+    this.cacheExpirationInMs = cacheExpirationInSeconds * 1_000;
   }
 
   getCacheSize(): number {
@@ -51,9 +52,9 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
 
   set(key: string, value: ValueType): void {
     this.cache.set(key, {
-      data: value,
-      cached_at_timestap_in_ms: this.nowFn(),
-      last_accessed_at_timestap_in_ms: this.nowFn(),
+      value,
+      cachedAtTimestampInMs: this.nowFn(),
+      lastAccessedAtTimestampInMs: this.nowFn(),
     });
 
     this.checkLruMaxSize();
@@ -62,17 +63,17 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
   get(key: string): Promise<ValueType | undefined> {
     const result = this.cache.get(key);
 
-    if (
-      !result ||
-      result.cached_at_timestap_in_ms + this.cacheExpirationInSeconds * 1_000 <
-        this.nowFn()
-    ) {
+    if (!result || this.isExpired(result)) {
       return Promise.resolve(undefined);
     }
 
-    result.last_accessed_at_timestap_in_ms = this.nowFn();
+    result.lastAccessedAtTimestampInMs = this.nowFn();
 
-    return Promise.resolve(result.data);
+    return Promise.resolve(result.value);
+  }
+
+  private isExpired({ cachedAtTimestampInMs }: Value<ValueType>) {
+    return cachedAtTimestampInMs + this.cacheExpirationInMs < this.nowFn();
   }
 
   clear(): void {
@@ -85,8 +86,8 @@ export class InMemoryCache<ValueType> implements ICache<ValueType> {
     const keysToDelete = [...this.cache.entries()]
       .sort(
         ([, leftValue], [, rightValue]) =>
-          rightValue.last_accessed_at_timestap_in_ms -
-          leftValue.last_accessed_at_timestap_in_ms
+          rightValue.lastAccessedAtTimestampInMs -
+          leftValue.lastAccessedAtTimestampInMs
       )
       .slice(this.maxItemsInCache)
       .map(([key]) => key);

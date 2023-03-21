@@ -3,7 +3,7 @@
  */
 
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import { ILogger } from "../logger/i-logger";
+import { Logger } from "../logger/logger";
 
 const denyList = new Set([
   "ENOTFOUND",
@@ -133,7 +133,7 @@ async function shouldRetry(
   return shouldRetryOrPromise;
 }
 
-export function applyRetryLogic(client: AxiosInstance, logger: ILogger) {
+export function applyRetryLogic(client: AxiosInstance, logger: Logger) {
   client.interceptors.request.use((config) => {
     const currentState = getCurrentState(config as RetryConfig);
     currentState.lastRequestTime = Date.now();

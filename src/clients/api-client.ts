@@ -1,45 +1,20 @@
-import { ApiResponse, ApiResponseError } from "../models/api-response";
-import { Payload } from "../models/payload";
-import { ApiError } from "../errors/ApiError";
-import { ILogger } from "../internals/logger/i-logger";
-import { IApiClient } from "./i-api-client";
-import { IHttpClient } from "../internals/client/i-http-client";
+import { GetDynamicContentPayload } from "../models/get-dynamic-content-payload";
+import { ApiResponse } from "../models/api-response";
+import { PublishContentUpdatePayload } from "../models/publish-content-update-payload";
 
-/**
- * API Client to getContents, using REST protocol
- */
-export class ApiClient implements IApiClient {
-  constructor(private client: IHttpClient, private logger: ILogger) {}
+export interface ApiClient {
+  getDynamicContent({
+    contentIds,
+    payload,
+    responseType,
+  }: {
+    contentIds: string[];
+    payload: GetDynamicContentPayload;
+    responseType?: "serialized";
+  }): Promise<Record<string, ApiResponse>>;
 
-  async getDynamicContent(
-    contentIds: string[],
-    payload: Payload
-  ): Promise<Record<string, ApiResponse>> {
-    const { params, semVer, userId } = payload;
-
-    const response: Record<string, ApiResponse | ApiResponseError> =
-      await this.client.post(
-        `/combine/`,
-        {
-          u: userId ?? "",
-          v: semVer,
-          p: params,
-        },
-        {
-          c: JSON.stringify(contentIds),
-          dynamic: "true",
-          responseType: "serialized",
-        }
-      );
-
-    return Object.entries(response).reduce((acc, [key, value]) => {
-      if (ApiError.isApiResponseError(value)) {
-        this.logger.error(value);
-
-        throw new ApiError(value);
-      }
-
-      return { ...acc, [key]: value };
-    }, {});
-  }
+  publishContentUpdate(
+    contentId: string,
+    payload: PublishContentUpdatePayload
+  ): Promise<void>;
 }

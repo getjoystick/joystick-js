@@ -1,5 +1,5 @@
 import { It, mock, reset, when } from "strong-mock";
-import { ApiClient } from "../src/clients/api-client";
+import { ApiClient } from "../src/clients/joystick-api-client";
 import { Joystick } from "../src";
 import * as dotenv from "dotenv";
 

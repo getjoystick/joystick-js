@@ -1,35 +1,70 @@
 import { InMemoryCache } from "../../../src/internals/cache/in-memory-cache";
+import { SdkLogger } from "../../../src/internals/logger/sdk-logger";
+import { InvalidArgumentError } from "../../../src/errors/invalid-argument-error";
+import { ApiResponse } from "../../../src/models/api-response";
 
-describe("InMemoryCache", () => {
-  it("constructor", () => {
-    const nowFn = () => 10;
+const createSampleApiResponse = (data: ApiResponse["data"]) => ({
+  data,
+  hash: "hash",
+  meta: {
+    uid: 0,
+    mod: 0,
+    variants: [],
+    seg: [],
+  },
+});
 
-    const cache = new InMemoryCache(10, undefined, nowFn);
+describe("test InMemoryCache", () => {
+  it("init", () => {
+    const logger = new SdkLogger();
 
-    expect(cache).toBeDefined();
+    const sut = new InMemoryCache({
+      cacheExpirationInSeconds: 10,
+      logger,
+    });
+
+    expect(sut.getCacheSize()).toEqual(0);
   });
 
-  it("get", () => {
+  it("get", async () => {
     let timelapse = 1_000_000;
+
+    const logger = new SdkLogger();
     const nowFn = () => timelapse;
 
-    const cache = new InMemoryCache(10, undefined, nowFn);
+    const cache = new InMemoryCache({
+      cacheExpirationInSeconds: 10,
+      logger,
+      nowFn,
+    });
 
-    cache.set("key", -1);
+    const value = {
+      c1: createSampleApiResponse({
+        foo: "bar",
+      }),
+    };
 
-    expect(cache.get("key")).toBe(-1);
+    cache.set("key", value);
+
+    expect(await cache.get("key")).toEqual(value);
 
     timelapse *= 2;
 
-    expect(cache.get("key")).toBeUndefined();
+    expect(await cache.get("key")).toBeUndefined();
   });
 
   it("setCacheExpirationInSeconds", () => {
-    const cache = new InMemoryCache(10);
+    const logger = new SdkLogger();
 
-    expect(() => cache.setCacheExpirationInSeconds(-1)).toThrow();
+    const cache = new InMemoryCache({ cacheExpirationInSeconds: 10, logger });
 
-    expect(() => cache.setCacheExpirationInSeconds(0)).toThrow();
+    expect(() => cache.setCacheExpirationInSeconds(-1)).toThrow(
+      InvalidArgumentError
+    );
+
+    expect(() => cache.setCacheExpirationInSeconds(0)).toThrow(
+      InvalidArgumentError
+    );
 
     expect(() => cache.setCacheExpirationInSeconds(1)).not.toThrow();
   });
@@ -38,23 +73,36 @@ describe("InMemoryCache", () => {
     let timelapse = 1_000_000;
     const nowFn = () => timelapse;
 
-    const cache = new InMemoryCache(10, 2, nowFn);
+    const logger = new SdkLogger();
 
-    cache.set("key1", -1);
+    const cache = new InMemoryCache({
+      cacheExpirationInSeconds: 10,
+      maxItemsInCache: 2,
+      logger,
+      nowFn,
+    });
+
+    const value = {
+      c1: createSampleApiResponse({
+        foo: "bar",
+      }),
+    };
+
+    cache.set("key1", value);
 
     expect(cache.getCacheSize()).toBe(1);
 
     timelapse *= 2;
 
-    cache.set("key2", -2);
+    cache.set("key2", value);
 
     expect(cache.getCacheSize()).toBe(2);
 
-    cache.set("key2", -3);
+    cache.set("key2", value);
 
     expect(cache.getCacheSize()).toBe(2);
 
-    cache.set("key3", -4);
+    cache.set("key3", value);
 
     expect(cache.getCacheSize()).toBe(2);
 

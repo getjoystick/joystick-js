@@ -1,12 +1,22 @@
 import { It, mock, reset, when } from "strong-mock";
-import { ApiClient } from "../src/clients/joystick-api-client";
 import { Joystick } from "../src";
-import * as dotenv from "dotenv";
+import { JoystickApiClient } from "../src/clients/joystick-api-client";
+import { ApiResponse } from "../src/models/api-response";
+import { InvalidArgumentError } from "../src/errors/invalid-argument-error";
 
-dotenv.config();
+const createSampleApiResponse = (data: ApiResponse["data"]) => ({
+  data,
+  hash: "hash",
+  meta: {
+    uid: 0,
+    mod: 0,
+    variants: [],
+    seg: [],
+  },
+});
 
 describe("test SDK", () => {
-  let mockApiClient: ApiClient;
+  let mockApiClient: JoystickApiClient;
 
   it("CCVD-01 - only apiKey required", () => {
     const sut = new Joystick({
@@ -61,7 +71,7 @@ describe("test SDK", () => {
   });
 
   it("CN-02 - not sharing cache", async () => {
-    mockApiClient = mock<ApiClient>();
+    mockApiClient = mock<JoystickApiClient>();
 
     const sut1 = new Joystick({
       properties: {
@@ -69,6 +79,8 @@ describe("test SDK", () => {
       },
       apiClient: mockApiClient,
     });
+
+    await sut1.getContent({ contentId: "10" });
 
     expect(sut1.getApiKey()).toBe("123");
     expect(sut1.getUserId()).toBeUndefined();
@@ -141,34 +153,23 @@ describe("test SDK", () => {
     expect(sut.getCacheExpirationInSeconds()).toBe(11);
   });
 
-  it("getContent", async () => {
-    mockApiClient = mock<ApiClient>();
+  it("getContent - responseType=serialized fullResponse=true", async () => {
+    mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
-      mockApiClient.getDynamicContent(It.isAny(), It.isAny())
+      mockApiClient.getDynamicContent(
+        It.isObject({
+          contentIds: It.isArray(["key1"]),
+          payload: It.isAny(),
+          responseType: "serialized",
+        })
+      )
     ).thenResolve({
-      key1: {
-        hash: "hash",
-        data: JSON.stringify({
+      key1: createSampleApiResponse(
+        JSON.stringify({
           id: "item.1",
-        }),
-        meta: {
-          uid: 1,
-          mod: 0,
-          seg: [],
-        },
-      },
-      key2: {
-        hash: "hash2",
-        data: JSON.stringify({
-          id: "item.21",
-        }),
-        meta: {
-          uid: 1,
-          mod: 0,
-          seg: [],
-        },
-      },
+        })
+      ),
     });
 
     const sut = new Joystick({
@@ -178,9 +179,78 @@ describe("test SDK", () => {
       apiClient: mockApiClient,
     });
 
-    expect(await sut.getContent("key1")).toEqual({
+    expect(
+      await sut.getContent({
+        contentId: "key1",
+        options: {
+          fullResponse: true,
+          serialized: true,
+        },
+      })
+    ).toEqual({
       key1: {
-        id: "item.1",
+        data: '{"id":"item.1"}',
+        hash: "hash",
+        meta: {
+          mod: 0,
+          seg: [],
+          uid: 0,
+          variants: [],
+        },
+      },
+    });
+  });
+
+  it("getContent - fullResponse=false", async () => {
+    mockApiClient = mock<JoystickApiClient>();
+
+    when(() =>
+      mockApiClient.getDynamicContent(
+        It.isObject({
+          contentIds: It.isArray(["key2"]),
+          payload: It.isAny(),
+          responseType: It.isAny(),
+        })
+      )
+    )
+      .thenResolve({
+        key2: createSampleApiResponse({
+          id: "item.1",
+        }),
+      })
+      .once();
+
+    const sut = new Joystick({
+      properties: {
+        apiKey: "123",
+      },
+      apiClient: mockApiClient,
+    });
+
+    expect(
+      await sut.getContent({
+        contentId: "key2",
+        options: {
+          fullResponse: false,
+        },
+      })
+    ).toEqual({
+      key2: {
+        data: { id: "item.1" },
+      },
+    });
+
+    //from cache
+    expect(
+      await sut.getContent({
+        contentId: "key2",
+        options: {
+          fullResponse: false,
+        },
+      })
+    ).toEqual({
+      key2: {
+        data: { id: "item.1" },
       },
     });
   });
@@ -317,7 +387,19 @@ describe("test SDK", () => {
 
     expect(sut.getSemVer()).toBe("1.3.4");
 
-    expect(() => sut.setSemVer("2")).toThrowError("Invalid semVer: 2");
+    expect(() => sut.setSemVer("2")).toThrowError(
+      new InvalidArgumentError("Invalid semVer: 2")
+    );
+
+    expect(() => sut.setSemVer("a.b.c")).toThrowError(
+      new InvalidArgumentError("Invalid semVer: a.b.c")
+    );
+
+    expect(() => sut.setSemVer("1 .2.4")).toThrowError(
+      new InvalidArgumentError("Invalid semVer: 1 .2.4")
+    );
+
+    expect(sut.getSemVer()).toBe("1.3.4");
 
     sut.setSemVer("0.0.1");
 
@@ -366,7 +448,7 @@ describe("test SDK", () => {
       },
     });
 
-    const resultv1 = await sut.getContent("first_config");
+    const resultv1 = await sut.getContent({ contentId: "first_config" });
 
     expect(resultv1).toEqual({
       first_config: {
@@ -376,7 +458,7 @@ describe("test SDK", () => {
 
     sut.setSemVer("2.0.0");
 
-    const resultv2 = await sut.getContent("first_config");
+    const resultv2 = await sut.getContent({ contentId: "first_config" });
 
     expect(resultv2).toEqual({
       first_config: {

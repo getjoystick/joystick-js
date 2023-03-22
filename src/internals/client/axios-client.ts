@@ -87,20 +87,18 @@ export class AxiosClient implements HttpClient {
   }
 
   private checkForErrors(e: unknown) {
-    if (!(e instanceof AxiosError && e.status)) {
-      return;
-    }
+    if (e instanceof AxiosError && e.status) {
+      if (e.status >= 400 && e.status < 500) {
+        throw new ApiBadRequestError(e.message);
+      }
 
-    if (e.status >= 400 && e.status < 500) {
-      throw new ApiBadRequestError(e.message);
-    }
+      if (e.status >= 500) {
+        throw new ApiServerError(e.message);
+      }
 
-    if (e.status >= 500) {
-      throw new ApiServerError(e.message);
-    }
-
-    if (e.status != 200) {
-      throw new ApiUnkownError(e.message);
+      if (e.status != 200) {
+        throw new ApiUnkownError(e.message);
+      }
     }
   }
 }

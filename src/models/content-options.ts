@@ -1,5 +1,5 @@
 export interface ContentOptions {
-  refresh: boolean;
-  serialized: boolean;
-  fullResponse: boolean;
+  refresh?: boolean;
+  serialized?: boolean;
+  fullResponse?: boolean;
 }

@@ -1,13 +1,16 @@
 import { AxiosClient } from "../../src/internals/client/axios-client";
 import { JoystickApiClient } from "../../src/clients/joystick-api-client";
+import { SdkLogger } from "../../src/internals/logger/sdk-logger";
 
 describe("test JoystickApiClient", () => {
   it("getContent", async () => {
     const apiKey = "apiKey";
 
+    const logger = new SdkLogger();
+
     const sut = new JoystickApiClient({
-      client: new AxiosClient({ apiKey, logger: console }),
-      logger: console,
+      client: new AxiosClient({ apiKey, logger }),
+      logger,
     });
 
     expect(

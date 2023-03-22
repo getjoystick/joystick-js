@@ -1,4 +1,4 @@
-import { sha256ToHex } from "../../src/hash/sha256ToHex";
+import { sha256ToHex } from "../../../src/internals/hash/sha256-to-hex";
 
 describe("test sha256", () => {
   it("sha256ToHex(array)", async () => {

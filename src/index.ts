@@ -13,35 +13,18 @@ import { ApiUnkownError } from "./errors/api-unkown-error";
 import { MultipleContentsApiError } from "./errors/multiple-contents-api-error";
 import { ApiServerError } from "./errors/api-server-error";
 import { ApiBadRequestError } from "./errors/api-bad-request-error";
+import { InvalidArgumentError } from "./errors/invalid-argument-error";
 
 const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
-const SEM_VER_REG_EXP = new RegExp(/^[0-9]+.[0-9]+.[0-9]+$/);
+const SEM_VER_REG_EXP = /^\d+.\d+.\d+$/;
 
-/**
- * Main class
- */
 export class Joystick {
   private readonly properties: Properties;
   private readonly apiClient: ApiClient;
-  private readonly cache: Cache<Record<string, ApiResponse>>;
+  private readonly cache: Cache;
   private readonly logger: Logger;
 
-  /**
-   * Initialize the class with default values.
-   *
-   * @param properties
-   *  Default values for the class properties.
-   *  Only apiKey is required.
-   *  Optional parameters to provide a different ApiClient implementation.
-   *  Used mostly in testing.
-   * @param apiClient
-   *  if not specified, the library provides a default implementation, using Axios
-   * @param logger
-   *  if not specified, the library provides a default implementation based on Console class.
-   * @param cache
-   *  if not specified, the library provides an in-memory implementation, using Map class.
-   */
   constructor({
     properties,
     apiClient,
@@ -51,7 +34,7 @@ export class Joystick {
     properties: Properties;
     apiClient?: ApiClient;
     logger?: Logger;
-    cache?: Cache<Record<string, ApiResponse>>;
+    cache?: Cache;
   }) {
     const { semVer, userId, apiKey } = properties;
 
@@ -75,7 +58,7 @@ export class Joystick {
 
     this.cache =
       cache ??
-      new InMemoryCache<Record<string, ApiResponse>>({
+      new InMemoryCache({
         cacheExpirationInSeconds: this.getCacheExpirationInSeconds(),
         logger: this.logger,
       });
@@ -90,7 +73,7 @@ export class Joystick {
    *
    *  console.log(value?.name);
    *
-   * Default use:
+   * Default use case:
    * @example
    *  const value=getParamValue("key");
    *
@@ -151,58 +134,82 @@ export class Joystick {
     this.cache.clear();
   }
 
-  async getContent(
-    contentId: string,
-    options?: ContentOptions
-  ): Promise<Record<string, ApiResponse | undefined>> {
-    return this.getContents([contentId], options);
+  async getContent({
+    contentId,
+    options,
+  }: {
+    contentId: string;
+    options?: ContentOptions;
+  }): Promise<Record<string, ApiResponse | undefined>> {
+    return this.getContents({ contentIds: [contentId], options });
   }
 
-  async getContents(
-    contentIds: string[],
-    options?: ContentOptions
-  ): Promise<Record<string, ApiResponse | undefined>> {
+  async getContents({
+    contentIds,
+    options,
+  }: {
+    contentIds: string[];
+    options?: ContentOptions;
+  }): Promise<Record<string, ApiResponse | undefined>> {
     this.validateContentIds(contentIds);
 
     const cacheKey = await this.buildCacheKey(contentIds, options);
 
-    const cachedData = await this.cache.get(cacheKey);
+    let content = options?.refresh ? undefined : await this.cache.get(cacheKey);
 
-    if (cachedData) {
-      return cachedData;
-    }
+    if (!content) {
+      try {
+        content = await this.apiClient.getDynamicContent({
+          contentIds,
+          payload: {
+            params: this.getParams(),
+            semVer: this.getSemVer(),
+            userId: this.getUserId(),
+          },
+          responseType: options?.serialized ? "serialized" : undefined,
+        });
 
-    try {
-      const freshContent = await this.apiClient.getDynamicContent({
-        contentIds,
-        payload: this.properties,
-        responseType: options?.serialized ? "serialized" : undefined,
-      });
+        this.cache.set(cacheKey, content);
+      } catch (e) {
+        if (e instanceof ApiUnkownError) {
+          this.logger.error(
+            "Found an unknown error when getting content from Joystick"
+          );
+        } else if (e instanceof MultipleContentsApiError) {
+          this.logger.error(
+            `The following errors found when calling Multiple Content API:\n${e.message}`
+          );
+        } else if (e instanceof ApiServerError) {
+          this.logger.error(
+            "Found a server error when getting content from Joystick"
+          );
+        } else if (e instanceof ApiBadRequestError) {
+          this.logger.error(
+            "Found a client error when getting content from Joystick"
+          );
+        }
 
-      this.cache.set(cacheKey, freshContent);
-
-      return freshContent;
-    } catch (e) {
-      if (e instanceof ApiUnkownError) {
-        this.logger.error(
-          "Found an unknown error when getting content from Joystick"
-        );
-      } else if (e instanceof MultipleContentsApiError) {
-        this.logger.error(
-          `The following errors found when calling Multiple Content API:\n${e.message}`
-        );
-      } else if (e instanceof ApiServerError) {
-        this.logger.error(
-          "Found a server error when getting content from Joystick"
-        );
-      } else if (e instanceof ApiBadRequestError) {
-        this.logger.error(
-          "Found a client error when getting content from Joystick"
-        );
+        throw e;
       }
-
-      throw e;
     }
+
+    if (options?.fullResponse) {
+      return content;
+    }
+
+    return this.simpleResponse(content);
+  }
+
+  private simpleResponse(freshContent: Record<string, ApiResponse>) {
+    return Object.entries(freshContent).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: {
+          data: value["data"],
+        },
+      }),
+      {}
+    );
   }
 
   private async buildCacheKey(
@@ -260,7 +267,7 @@ export class Joystick {
       contentIds.length == 0 ||
       contentIds.some((contentId) => !contentId.trim())
     ) {
-      throw new Error(
+      throw new InvalidArgumentError(
         "The contentIds parameter must be a non-empty array of strings."
       );
     }
@@ -268,7 +275,7 @@ export class Joystick {
 
   private validateApiKey(apiKey: string) {
     if (!apiKey.trim()) {
-      throw new Error(`Invalid apiKey: ${apiKey}`);
+      throw new InvalidArgumentError(`Invalid apiKey: ${apiKey}`);
     }
   }
 
@@ -276,7 +283,7 @@ export class Joystick {
     cacheExpirationInSeconds: number | undefined
   ) {
     if (cacheExpirationInSeconds != undefined && cacheExpirationInSeconds < 0) {
-      throw new Error(
+      throw new InvalidArgumentError(
         `Invalid cacheExpirationInSeconds: ${cacheExpirationInSeconds}`
       );
     }
@@ -284,37 +291,13 @@ export class Joystick {
 
   private validateSemVer(semVer: string | undefined) {
     if (semVer && !SEM_VER_REG_EXP.test(semVer)) {
-      throw new Error(`Invalid semVer: ${semVer}`);
+      throw new InvalidArgumentError(`Invalid semVer: ${semVer}`);
     }
   }
 
   private validateUserId(userId: string | undefined) {
     if (userId && !userId.trim()) {
-      throw new Error(`Invalid userId: ${userId}`);
+      throw new InvalidArgumentError(`Invalid userId: ${userId}`);
     }
-  }
-
-  private formatContent(
-    content: ApiResponse | undefined,
-    isSerializedActive: boolean | undefined,
-    fullResponse: boolean | undefined
-  ) {
-    if (!content) {
-      return {};
-    }
-
-    const { data, meta, hash } = content;
-
-    const massagedData = isSerializedActive || !data ? data : JSON.parse(data);
-
-    if (!fullResponse) {
-      return massagedData;
-    }
-
-    return {
-      data: massagedData,
-      hash,
-      meta,
-    };
   }
 }

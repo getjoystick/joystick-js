@@ -1,15 +1,21 @@
 import { GetDynamicContentPayload } from "../../src/models/get-dynamic-content-payload";
 
-describe("Payload", () => {
+describe("test GetDynamicContentPayload", () => {
   it("init", () => {
     const sut: GetDynamicContentPayload = {
       userId: "required-user-id",
       semVer: "required-semver",
-      params: {},
+      params: {
+        foo: "required-foo",
+        bar: "required-bar",
+      },
     };
 
     expect(sut).toEqual({
-      params: {},
+      params: {
+        foo: "required-foo",
+        bar: "required-bar",
+      },
       semVer: "required-semver",
       userId: "required-user-id",
     });

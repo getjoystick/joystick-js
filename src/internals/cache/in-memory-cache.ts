@@ -1,17 +1,19 @@
 import { Cache } from "./cache";
 import { Logger } from "../logger/logger";
+import { ApiResponse } from "../../models/api-response";
+import { InvalidArgumentError } from "../../errors/invalid-argument-error";
 
-interface Value<ValueType> {
-  value: ValueType;
+interface CacheValue {
+  value: Record<string, ApiResponse>;
   cachedAtTimestampInMs: number;
   lastAccessedAtTimestampInMs: number;
 }
 
 /**
- * In-memory implementation, using Map class.
+ * In-memory implementation, using the Map class.
  */
-export class InMemoryCache<ValueType> implements Cache<ValueType> {
-  private readonly cache: Map<string, Value<ValueType>>;
+export class InMemoryCache implements Cache {
+  private readonly cache: Map<string, CacheValue>;
   private cacheExpirationInMs: number;
   private readonly logger: Logger;
   private readonly maxItemsInCache: number;
@@ -36,7 +38,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
     this.maxItemsInCache = maxItemsInCache;
     this.nowFn = nowFn;
 
-    this.cache = new Map<string, Value<ValueType>>();
+    this.cache = new Map<string, CacheValue>();
   }
 
   setCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
@@ -49,7 +51,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
     return this.cache.size;
   }
 
-  set(key: string, value: ValueType): void {
+  set(key: string, value: Record<string, ApiResponse>): void {
     this.cache.set(key, {
       value,
       cachedAtTimestampInMs: this.nowFn(),
@@ -59,7 +61,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
     this.checkLruMaxSize();
   }
 
-  get(key: string): Promise<ValueType | undefined> {
+  get(key: string): Promise<Record<string, ApiResponse> | undefined> {
     const result = this.cache.get(key);
 
     if (!result || this.isExpired(result)) {
@@ -71,7 +73,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
     return Promise.resolve(result.value);
   }
 
-  private isExpired({ cachedAtTimestampInMs }: Value<ValueType>) {
+  private isExpired({ cachedAtTimestampInMs }: CacheValue) {
     return cachedAtTimestampInMs + this.cacheExpirationInMs < this.nowFn();
   }
 
@@ -98,7 +100,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
 
   private validateCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
     if (cacheExpirationInSeconds <= 0) {
-      throw new Error(
+      throw new InvalidArgumentError(
         `Invalid cacheExpirationInSeconds: ${cacheExpirationInSeconds}. It should be greater than 0.`
       );
     }
@@ -106,7 +108,7 @@ export class InMemoryCache<ValueType> implements Cache<ValueType> {
 
   private validateMaxItemsInCache(maxItemsInCache: number) {
     if (maxItemsInCache < 1) {
-      throw new Error(
+      throw new InvalidArgumentError(
         `Invalid maxItemsInCache: ${maxItemsInCache}. It should be greater than 0.`
       );
     }

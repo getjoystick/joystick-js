@@ -5,6 +5,7 @@ import { HttpClient } from "../internals/client/http-client";
 import { ApiClient } from "./api-client";
 import { PublishContentUpdatePayload } from "../models/publish-content-update-payload";
 import { MultipleContentsApiError } from "../errors/multiple-contents-api-error";
+import { InvalidArgumentError } from "../errors/invalid-argument-error";
 
 export class JoystickApiClient implements ApiClient {
   private readonly client: HttpClient;
@@ -42,9 +43,10 @@ export class JoystickApiClient implements ApiClient {
 
     this.checkForErrors(response);
 
-    return Object.entries(response).reduce((acc, [key, value]) => {
-      return { ...acc, [key]: value };
-    }, {});
+    return Object.entries(response).reduce(
+      (acc, [key, value]) => ({ ...acc, [key]: value }),
+      {}
+    );
   }
 
   async publishContentUpdate({
@@ -72,7 +74,7 @@ export class JoystickApiClient implements ApiClient {
 
   private validateDescription(description: string) {
     if (description.length < 1 || description.length > 50) {
-      throw new Error(
+      throw new InvalidArgumentError(
         `Invalid description: ${description}. It should be between 1 and 50 characters long.`
       );
     }
@@ -82,7 +84,9 @@ export class JoystickApiClient implements ApiClient {
     try {
       JSON.stringify(content);
     } catch {
-      throw new Error("Invalid content. It should be JSON encodable.");
+      throw new InvalidArgumentError(
+        "Invalid content. It should be JSON encodable."
+      );
     }
   }
 
@@ -93,7 +97,7 @@ export class JoystickApiClient implements ApiClient {
       try {
         JSON.stringify(dynamicContentMap);
       } catch {
-        throw new Error(
+        throw new InvalidArgumentError(
           "Invalid dynamicContentMap. It should be JSON encodable."
         );
       }

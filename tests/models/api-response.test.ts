@@ -1,4 +1,4 @@
-import { ApiResponse, ApiResponseError } from "../../src/models/api-response";
+import { ApiResponse } from "../../src/models/api-response";
 
 describe("ApiResponse", () => {
   it("init", () => {
@@ -8,6 +8,7 @@ describe("ApiResponse", () => {
       meta: {
         mod: 1,
         uid: 2,
+        variants: [],
         seg: [],
       },
     };
@@ -17,25 +18,10 @@ describe("ApiResponse", () => {
       hash: "required-hash",
       meta: {
         mod: 1,
+        variants: [],
         seg: [],
         uid: 2,
       },
-    });
-  });
-});
-
-describe("ApiResponseError", () => {
-  it("init", () => {
-    const sut: ApiResponseError = {
-      errors: [],
-      title: "required-title",
-      status: 2,
-    };
-
-    expect(sut).toEqual({
-      errors: [],
-      status: 2,
-      title: "required-title",
     });
   });
 });

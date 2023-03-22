@@ -1,10 +1,9 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { applyRetryLogic } from "./retry-logic";
+import axios, { AxiosError, AxiosInstance } from "axios";
 import { Logger } from "../logger/logger";
-import { ApiResponseError } from "../../models/api-response";
 import { HttpClient } from "./http-client";
-
-const ERRORS_REGEXP = new RegExp(/(\{.+}).$/);
+import { ApiUnkownError } from "../../errors/api-unkown-error";
+import { ApiServerError } from "../../errors/api-server-error";
+import { ApiBadRequestError } from "../../errors/api-bad-request-error";
 
 export class AxiosClient implements HttpClient {
   private readonly client: AxiosInstance;
@@ -31,83 +30,77 @@ export class AxiosClient implements HttpClient {
       responseEncoding: "UTF-8",
       responseType: "json",
     });
-
-    this.checkResponseForErrors();
-
-    applyRetryLogic(this.client, logger);
   }
 
-  async put<ResponseType>(
-    url: string,
-    payload: Record<string, unknown>,
-    params?: Record<string, unknown>
-  ): Promise<ResponseType> {
+  async put({
+    url,
+    payload,
+    params,
+  }: {
+    url: string;
+    payload: Record<string, unknown>;
+    params?: Record<string, unknown>;
+  }): Promise<void> {
     this.logger.debug("Sending put request", {
       url,
       payload,
       params,
     });
 
-    const { data } = await this.client.put(url, payload, {
-      params,
-    });
+    try {
+      await this.client.put(url, payload, {
+        params,
+      });
+    } catch (e) {
+      this.checkForErrors(e);
 
-    return data;
+      throw e;
+    }
   }
 
-  async post<ResponseType>(
-    url: string,
-    payload: Record<string, unknown>,
-    params?: Record<string, unknown>
-  ): Promise<ResponseType> {
+  async post({
+    url,
+    payload,
+    params,
+  }: {
+    url: string;
+    payload: Record<string, unknown>;
+    params?: Record<string, unknown>;
+  }): Promise<Record<string, unknown>> {
     this.logger.debug("Sending post request", {
       url,
       payload,
       params,
     });
 
-    const { data } = await this.client.post(url, payload, {
-      params,
-    });
+    try {
+      const { data } = await this.client.post(url, payload, {
+        params,
+      });
 
-    return data;
+      return data;
+    } catch (e) {
+      this.checkForErrors(e);
+
+      throw e;
+    }
   }
 
-  private checkResponseForErrors() {
-    this.client.interceptors.response.use(async (response: AxiosResponse) => {
-      const { data } = response;
+  private checkForErrors(e: unknown) {
+    if (!(e instanceof AxiosError && e.status)) {
+      return;
+    }
 
-      const massagedData =
-        typeof data === "string"
-          ? data
-          : Object.entries(data).reduce((acc, [key, value]) => {
-              let massagedValue = value;
+    if (e.status >= 400 && e.status < 500) {
+      throw new ApiBadRequestError(e.message);
+    }
 
-              if (typeof value === "string") {
-                massagedValue = ERRORS_REGEXP.exec(value)?.[1];
+    if (e.status >= 500) {
+      throw new ApiServerError(e.message);
+    }
 
-                if (typeof massagedValue === "string") {
-                  massagedValue = JSON.parse(massagedValue);
-
-                  if (isApiResponseError(massagedValue)) {
-                    massagedValue = massagedValue.errors;
-                  }
-                }
-              }
-
-              return {
-                ...acc,
-                [key]: massagedValue,
-              };
-            }, {});
-
-      this.logger.debug(`{ data }`);
-
-      return Promise.resolve({ ...response, data: massagedData });
-    });
+    if (e.status != 200) {
+      throw new ApiUnkownError(e.message);
+    }
   }
-}
-
-function isApiResponseError(value: unknown): value is ApiResponseError {
-  return (value as ApiResponseError)?.errors !== undefined;
 }

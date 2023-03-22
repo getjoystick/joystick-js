@@ -1,3 +1,3 @@
-import { JoystickError } from "./joystick-error";
+import { ApiHttpError } from "./api-http-error";
 
-export class ApiUnkownError extends JoystickError {}
+export class ApiUnkownError extends ApiHttpError {}

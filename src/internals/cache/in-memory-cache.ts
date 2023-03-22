@@ -8,8 +8,7 @@ interface Value<ValueType> {
 }
 
 /**
- * A class used to cache values in memory.
- * @overview A simple implementation to avoid dependencies
+ * In-memory implementation, using Map class.
  */
 export class InMemoryCache<ValueType> implements Cache<ValueType> {
   private readonly cache: Map<string, Value<ValueType>>;

@@ -28,4 +28,6 @@ export class NodeCacheImpl implements Cache<string> {
   }
 }
 
-new Joystick({});
+new Joystick({
+  apiKey: "SOME-API-KEY",
+});

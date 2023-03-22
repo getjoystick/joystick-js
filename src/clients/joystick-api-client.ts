@@ -1,10 +1,10 @@
-import { ApiResponse, ApiResponseError } from "../models/api-response";
+import { ApiResponse } from "../models/api-response";
 import { GetDynamicContentPayload } from "../models/get-dynamic-content-payload";
-import { ApiError } from "../errors/api-error";
 import { Logger } from "../internals/logger/logger";
 import { HttpClient } from "../internals/client/http-client";
 import { ApiClient } from "./api-client";
 import { PublishContentUpdatePayload } from "../models/publish-content-update-payload";
+import { MultipleContentsApiError } from "../errors/multiple-contents-api-error";
 
 export class JoystickApiClient implements ApiClient {
   private readonly client: HttpClient;
@@ -26,50 +26,48 @@ export class JoystickApiClient implements ApiClient {
   }): Promise<Record<string, ApiResponse>> {
     const { params, semVer, userId = "" } = payload;
 
-    const response: Record<string, ApiResponse | ApiResponseError> =
-      await this.client.post(
-        "https://api.getjoystick.com/api/v1/combine/",
-        {
-          u: userId,
-          v: semVer,
-          p: params,
-        },
-        {
-          c: JSON.stringify(contentIds),
-          dynamic: "true",
-          responseType,
-        }
-      );
+    const response = await this.client.post({
+      url: "https://api.getjoystick.com/api/v1/combine/",
+      payload: {
+        u: userId,
+        v: semVer,
+        p: params,
+      },
+      params: {
+        c: JSON.stringify(contentIds),
+        dynamic: "true",
+        responseType,
+      },
+    });
+
+    this.checkForErrors(response);
 
     return Object.entries(response).reduce((acc, [key, value]) => {
-      if (ApiError.isApiResponseError(value)) {
-        this.logger.error(value);
-
-        throw new ApiError(value);
-      }
-
       return { ...acc, [key]: value };
     }, {});
   }
 
-  async publishContentUpdate(
-    contentId: string,
-    payload: PublishContentUpdatePayload
-  ): Promise<void> {
-    const { description, dynamicContentMap = [], content } = payload;
+  async publishContentUpdate({
+    contentId,
+    payload,
+  }: {
+    contentId: string;
+    payload: PublishContentUpdatePayload;
+  }): Promise<void> {
+    const { description, content, dynamicContentMap = [] } = payload;
 
     this.validateDescription(description);
     this.validateContent(content);
     this.validateDynamicContentMap(dynamicContentMap);
 
-    await this.client.put(
-      `https://capi.getjoystick.com/api/v1/config/${contentId}`,
-      {
+    await this.client.put({
+      url: `https://capi.getjoystick.com/api/v1/config/${contentId}`,
+      payload: {
         d: description,
         c: content,
         m: dynamicContentMap,
-      }
-    );
+      },
+    });
   }
 
   private validateDescription(description: string) {
@@ -83,7 +81,7 @@ export class JoystickApiClient implements ApiClient {
   private validateContent(content: PublishContentUpdatePayload["content"]) {
     try {
       JSON.stringify(content);
-    } catch (e) {
+    } catch {
       throw new Error("Invalid content. It should be JSON encodable.");
     }
   }
@@ -94,11 +92,21 @@ export class JoystickApiClient implements ApiClient {
     if (dynamicContentMap) {
       try {
         JSON.stringify(dynamicContentMap);
-      } catch (e) {
+      } catch {
         throw new Error(
           "Invalid dynamicContentMap. It should be JSON encodable."
         );
       }
+    }
+  }
+
+  private checkForErrors(response: Record<string, unknown>) {
+    const errorEntries = Object.values(response)
+      .filter((value) => typeof value === "string")
+      .map((error) => `- ${error as string}`);
+
+    if (errorEntries.length > 0) {
+      throw new MultipleContentsApiError(errorEntries.join("\n"));
     }
   }
 }

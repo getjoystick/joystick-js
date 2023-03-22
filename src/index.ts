@@ -9,6 +9,10 @@ import { SdkLogger } from "./internals/logger/sdk-logger";
 import { sha256ToHex } from "./internals/hash/sha256-to-hex";
 import { ApiClient } from "./clients/api-client";
 import { JoystickApiClient } from "./clients/joystick-api-client";
+import { ApiUnkownError } from "./errors/api-unkown-error";
+import { MultipleContentsApiError } from "./errors/multiple-contents-api-error";
+import { ApiServerError } from "./errors/api-server-error";
+import { ApiBadRequestError } from "./errors/api-bad-request-error";
 
 const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
@@ -167,15 +171,38 @@ export class Joystick {
     if (cachedData) {
       return cachedData;
     }
-    const freshContent = await this.apiClient.getDynamicContent({
-      contentIds,
-      payload: this.properties,
-      responseType: options?.serialized ? "serialized" : undefined,
-    });
 
-    this.cache.set(cacheKey, freshContent);
+    try {
+      const freshContent = await this.apiClient.getDynamicContent({
+        contentIds,
+        payload: this.properties,
+        responseType: options?.serialized ? "serialized" : undefined,
+      });
 
-    return freshContent;
+      this.cache.set(cacheKey, freshContent);
+
+      return freshContent;
+    } catch (e) {
+      if (e instanceof ApiUnkownError) {
+        this.logger.error(
+          "Found an unknown error when getting content from Joystick"
+        );
+      } else if (e instanceof MultipleContentsApiError) {
+        this.logger.error(
+          `The following errors found when calling Multiple Content API:\n${e.message}`
+        );
+      } else if (e instanceof ApiServerError) {
+        this.logger.error(
+          "Found a server error when getting content from Joystick"
+        );
+      } else if (e instanceof ApiBadRequestError) {
+        this.logger.error(
+          "Found a client error when getting content from Joystick"
+        );
+      }
+
+      throw e;
+    }
   }
 
   private async buildCacheKey(

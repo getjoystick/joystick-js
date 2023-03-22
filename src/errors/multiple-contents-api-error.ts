@@ -1,3 +1,3 @@
-import { ApiHttpError } from "./api-http-error";
+import { ApiError } from "./api-error";
 
-export class MultipleContentsApiError extends ApiHttpError {}
+export class MultipleContentsApiError extends ApiError {}

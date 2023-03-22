@@ -13,8 +13,11 @@ export interface ApiClient {
     responseType?: "serialized";
   }): Promise<Record<string, ApiResponse>>;
 
-  publishContentUpdate(
-    contentId: string,
-    payload: PublishContentUpdatePayload
-  ): Promise<void>;
+  publishContentUpdate({
+    contentId,
+    payload,
+  }: {
+    contentId: string;
+    payload: PublishContentUpdatePayload;
+  }): Promise<void>;
 }

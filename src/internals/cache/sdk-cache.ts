@@ -1,6 +1,6 @@
 import { ApiResponse } from "../../models/api-response";
 
-export interface Cache {
+export interface SdkCache {
   clear(): void;
 
   set(key: string, value: Record<string, ApiResponse>): void;

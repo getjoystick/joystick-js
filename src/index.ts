@@ -1,7 +1,7 @@
 import { ContentOptions } from "./models/content-options";
 import { ApiResponse } from "./models/api-response";
 import { Properties } from "./models/properties";
-import { Cache } from "./internals/cache/cache";
+import { SdkCache } from "./internals/cache/sdk-cache";
 import { Logger } from "./internals/logger/logger";
 import { AxiosClient } from "./internals/client/axios-client";
 import { InMemoryCache } from "./internals/cache/in-memory-cache";
@@ -22,8 +22,12 @@ const SEM_VER_REG_EXP = /^\d+.\d+.\d+$/;
 export class Joystick {
   private readonly properties: Properties;
   private readonly apiClient: ApiClient;
-  private readonly cache: Cache;
+  private readonly cache: SdkCache;
   private readonly logger: Logger;
+
+  public getCache(): SdkCache {
+    return this.cache;
+  }
 
   constructor({
     properties,
@@ -34,13 +38,16 @@ export class Joystick {
     properties: Properties;
     apiClient?: ApiClient;
     logger?: Logger;
-    cache?: Cache;
+    cache?: SdkCache;
   }) {
     const { semVer, userId, apiKey } = properties;
 
     this.validateApiKey(apiKey);
     this.validateUserId(userId);
     this.validateSemVer(semVer);
+    this.validateCacheExpirationInSeconds(
+      properties.options?.cacheExpirationInSeconds
+    );
 
     this.properties = properties;
 
@@ -268,13 +275,13 @@ export class Joystick {
       contentIds.some((contentId) => !contentId.trim())
     ) {
       throw new InvalidArgumentError(
-        "The contentIds parameter must be a non-empty array of strings."
+        "The contentIds parameter must be a non-empty array of strings"
       );
     }
   }
 
   private validateApiKey(apiKey: string) {
-    if (!apiKey.trim()) {
+    if (!apiKey || !apiKey.trim()) {
       throw new InvalidArgumentError(`Invalid apiKey: ${apiKey}`);
     }
   }

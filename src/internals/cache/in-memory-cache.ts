@@ -1,4 +1,4 @@
-import { Cache } from "./cache";
+import { SdkCache } from "./sdk-cache";
 import { Logger } from "../logger/logger";
 import { ApiResponse } from "../../models/api-response";
 import { InvalidArgumentError } from "../../errors/invalid-argument-error";
@@ -12,7 +12,7 @@ interface CacheValue {
 /**
  * In-memory implementation, using the Map class.
  */
-export class InMemoryCache implements Cache {
+export class InMemoryCache implements SdkCache {
   private readonly cache: Map<string, CacheValue>;
   private cacheExpirationInMs: number;
   private readonly logger: Logger;

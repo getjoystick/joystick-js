@@ -1,8 +1,8 @@
-import { Cache } from "../../../../src/internals/cache/cache";
+import { SdkCache } from "../../../../src/internals/cache/sdk-cache";
 import NodeCache from "node-cache";
 import { Joystick } from "@getjoystick/vanilla-js";
 
-export class NodeCacheImpl implements Cache<string> {
+export class NodeCacheImpl implements SdkCache<string> {
   private readonly cache: NodeCache;
 
   constructor() {

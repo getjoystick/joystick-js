@@ -29,6 +29,7 @@ export class AxiosClient implements HttpClient {
       },
       responseEncoding: "UTF-8",
       responseType: "json",
+      validateStatus: (status) => status === 200,
     });
   }
 
@@ -87,16 +88,18 @@ export class AxiosClient implements HttpClient {
   }
 
   private checkForErrors(e: unknown) {
-    if (e instanceof AxiosError && e.status) {
-      if (e.status >= 400 && e.status < 500) {
+    if (e instanceof AxiosError && e.response?.status) {
+      const { status } = e.response;
+
+      if (status >= 400 && status < 500) {
         throw new ApiBadRequestError(e.message);
       }
 
-      if (e.status >= 500) {
+      if (status >= 500) {
         throw new ApiServerError(e.message);
       }
 
-      if (e.status != 200) {
+      if (status != 200) {
         throw new ApiUnkownError(e.message);
       }
     }

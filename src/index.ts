@@ -211,9 +211,7 @@ export class Joystick {
     return Object.entries(freshContent).reduce(
       (acc, [key, value]) => ({
         ...acc,
-        [key]: {
-          data: value["data"],
-        },
+        [key]: value["data"],
       }),
       {}
     );

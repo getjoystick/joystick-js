@@ -50,7 +50,7 @@ describe("Construction of the client", () => {
     when(() =>
       mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
     ).thenResolve({
-      10: createSampleApiResponse("initial-data-from-http"),
+      10: createSampleApiResponse({ title: "initial-data-from-http" }),
     });
 
     const sut1 = new Joystick({
@@ -66,20 +66,20 @@ describe("Construction of the client", () => {
     // from http
     expect(await sut1.getContent({ contentId: "10" })).toEqual({
       "10": {
-        data: "initial-data-from-http",
+        title: "initial-data-from-http",
       },
     });
 
     when(() =>
       mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
     ).thenResolve({
-      10: createSampleApiResponse("fresh-data-from-http"),
+      10: createSampleApiResponse({ title: "fresh-data-from-http" }),
     });
 
     // from cache
     expect(await sut1.getContent({ contentId: "10" })).toEqual({
       "10": {
-        data: "initial-data-from-http",
+        title: "initial-data-from-http",
       },
     });
 
@@ -97,20 +97,20 @@ describe("Construction of the client", () => {
     // from http - so cache is not shared
     expect(await sut2.getContent({ contentId: "10" })).toEqual({
       "10": {
-        data: "fresh-data-from-http",
+        title: "fresh-data-from-http",
       },
     });
 
     when(() =>
       mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
     ).thenResolve({
-      10: createSampleApiResponse("most-fresh-data-from-http"),
+      10: createSampleApiResponse({ title: "most-fresh-data-from-http" }),
     });
 
     // from cache
     expect(await sut2.getContent({ contentId: "10" })).toEqual({
       "10": {
-        data: "fresh-data-from-http",
+        title: "fresh-data-from-http",
       },
     });
   });
@@ -544,7 +544,7 @@ describe("Get Contents method call", () => {
     });
   });
 
-  it("getContent - fullResponse=false", async () => {
+  it("GCS-12 - getContent - fullResponse=false", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
@@ -579,7 +579,7 @@ describe("Get Contents method call", () => {
       })
     ).toEqual({
       key2: {
-        data: { id: "item.1" },
+        id: "item.1",
       },
     });
 
@@ -593,19 +593,19 @@ describe("Get Contents method call", () => {
       })
     ).toEqual({
       key2: {
-        data: { id: "item.1" },
+        id: "item.1",
       },
     });
   });
 
-  it("getParamValue", () => {
+  it("CCVD-03 - setParamValue", () => {
     let sut = new Joystick({
       properties: {
         apiKey: "123",
       },
     });
 
-    expect(sut.getParamValue("key")).toBe(undefined);
+    expect(sut.getParamValue("key")).toBeUndefined();
 
     sut = new Joystick({
       properties: {
@@ -616,13 +616,19 @@ describe("Get Contents method call", () => {
       },
     });
 
+    const spyClearCache = jest.spyOn(sut, "clearCache");
+
     expect(sut.getParamValue("key")).toBe("value");
 
     sut.setParamValue("key", "another-value");
 
+    expect(spyClearCache).toHaveBeenCalled();
+
     expect(sut.getParamValue("key")).toBe("another-value");
 
     sut.setParamValue("key", null);
+
+    expect(spyClearCache).toHaveBeenCalledTimes(2);
 
     expect(sut.getParamValue("key")).toBe(null);
 
@@ -633,6 +639,8 @@ describe("Get Contents method call", () => {
       },
     });
 
+    expect(spyClearCache).toHaveBeenCalledTimes(3);
+
     expect(sut.getParamValue("key")).toBeUndefined();
 
     expect(sut.getParamValue("_m3")).toEqual({
@@ -641,18 +649,34 @@ describe("Get Contents method call", () => {
 
     sut.setParamValue("key", { name: "Miguel" });
 
+    expect(spyClearCache).toHaveBeenCalledTimes(4);
+
     const paramValue = sut.getParamValue<{ name: string }>("key");
 
     expect(paramValue?.name).toBe("Miguel");
   });
 
   it("call API", async () => {
+    mockApiClient = mock<JoystickApiClient>();
+
+    when(() =>
+      mockApiClient.getDynamicContent(
+        It.isObject({
+          contentIds: ["first_config"],
+        })
+      )
+    )
+      .thenResolve({
+        first_config: createSampleApiResponse({ name: "Miguel" }),
+      })
+      .anyTimes();
+
     const sut = new Joystick({
       properties: {
-        apiKey: process.env.JOYSTICK_API_KEY!,
+        apiKey: "JOYSTICK_API_KEY",
         semVer: "1.0.0",
-        params: {},
       },
+      apiClient: mockApiClient,
     });
 
     const resultv1 = await sut.getContent({ contentId: "first_config" });
@@ -665,11 +689,25 @@ describe("Get Contents method call", () => {
 
     sut.setSemVer("2.0.0");
 
-    const resultv2 = await sut.getContent({ contentId: "first_config" });
+    const resultv2 = await sut.getContent({
+      contentId: "first_config",
+      options: {
+        fullResponse: true,
+      },
+    });
 
     expect(resultv2).toEqual({
       first_config: {
-        name: "Miguel",
+        data: {
+          name: "Miguel",
+        },
+        hash: "hash",
+        meta: {
+          mod: 0,
+          seg: [],
+          uid: 0,
+          variants: [],
+        },
       },
     });
   });

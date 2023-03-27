@@ -27,8 +27,9 @@ describe("test sha256", () => {
         {
           a: "a value",
           b: "b value",
+          c: "c value",
         },
-        "0.0.1",
+        "0.1.1",
         "USER-ID",
         ["sample-second"],
         true,
@@ -37,7 +38,7 @@ describe("test sha256", () => {
     );
 
     expect(hash).toBe(
-      "c20acb3ca476a1eb90af5f20279c4d8309f6bbed77d8679fb6843915fc5780e6"
+      "706406de56f26c5a536cc205f4d98606fc4dcc6a08fb43db9f1e0c59addc7b1f"
     );
   });
 });

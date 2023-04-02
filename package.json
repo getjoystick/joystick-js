@@ -1,6 +1,6 @@
 {
   "name": "@getjoystick/vanilla-js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Vanilla JS SDK for Joystick",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

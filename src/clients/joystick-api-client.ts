@@ -75,7 +75,7 @@ export class JoystickApiClient implements ApiClient {
   private validateDescription(description: string) {
     if (description.length < 1 || description.length > 50) {
       throw new InvalidArgumentError(
-        `Invalid description: ${description}. It should be between 1 and 50 characters long.`
+        `Invalid description: ${description}. It should be between 1 and 50 characters long`
       );
     }
   }
@@ -85,7 +85,7 @@ export class JoystickApiClient implements ApiClient {
       JSON.stringify(content);
     } catch {
       throw new InvalidArgumentError(
-        "Invalid content. It should be JSON encodable."
+        "Invalid content. It should be JSON encodable"
       );
     }
   }
@@ -98,7 +98,7 @@ export class JoystickApiClient implements ApiClient {
         JSON.stringify(dynamicContentMap);
       } catch {
         throw new InvalidArgumentError(
-          "Invalid dynamicContentMap. It should be JSON encodable."
+          "Invalid dynamicContentMap. It should be JSON encodable"
         );
       }
     }

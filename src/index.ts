@@ -14,6 +14,7 @@ import { MultipleContentsApiError } from "./errors/multiple-contents-api-error";
 import { ApiServerError } from "./errors/api-server-error";
 import { ApiBadRequestError } from "./errors/api-bad-request-error";
 import { InvalidArgumentError } from "./errors/invalid-argument-error";
+import { PublishContentUpdatePayload } from "./models/publish-content-update-payload";
 
 const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
 
@@ -111,6 +112,39 @@ export class Joystick {
       this.properties.options?.cacheExpirationInSeconds ||
       DEFAULT_CACHE_EXPIRATION_IN_SECONDS
     );
+  }
+
+  async publishContentUpdate({
+    contentId,
+    payload,
+  }: {
+    contentId: string;
+    payload: PublishContentUpdatePayload;
+  }): Promise<void> {
+    this.validateContentId(contentId);
+
+    try {
+      return await this.apiClient.publishContentUpdate({
+        contentId,
+        payload,
+      });
+    } catch (e) {
+      if (e instanceof ApiUnkownError) {
+        this.logger.error(
+          "Found an unknown error when publishing content update to Joystick"
+        );
+      } else if (e instanceof ApiServerError) {
+        this.logger.error(
+          "Found a server error when publishing content update to Joystick"
+        );
+      } else if (e instanceof ApiBadRequestError) {
+        this.logger.error(
+          "Found a client error when publishing content update to Joystick"
+        );
+      }
+
+      throw e;
+    }
   }
 
   /**
@@ -287,6 +321,12 @@ export class Joystick {
   private validateUserId(userId: string | undefined) {
     if (userId && !userId.trim()) {
       throw new InvalidArgumentError(`Invalid userId: <${userId}>`);
+    }
+  }
+
+  private validateContentId(contentId: string) {
+    if (!contentId || !contentId.trim()) {
+      throw new InvalidArgumentError(`Invalid contentId: <${contentId}>`);
     }
   }
 }

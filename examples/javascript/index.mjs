@@ -3,11 +3,17 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-console.debug = console.log;
-
 const joystick = new Joystick({
-  apiKey: process.env.JOYSTICK_API_KEY
-}, undefined, () => console);
+  properties: {
+    apiKey: process.env.JOYSTICK_API_KEY
+  }
+});
 
-joystick.getContent("first_config2")
+joystick
+  .getContent({
+    contentId: "first_config", options: {
+      fullResponse: true,
+      serialized: true
+    }
+  })
   .then(r => console.log(r))

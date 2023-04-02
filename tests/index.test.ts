@@ -5,6 +5,7 @@ import { ApiResponse } from "../src/models/api-response";
 import { InvalidArgumentError } from "../src/errors/invalid-argument-error";
 import { SdkCache } from "../src/internals/cache/sdk-cache";
 import { InMemoryCache } from "../src/internals/cache/in-memory-cache";
+import { ApiClient } from "../src/clients/api-client";
 
 const createSampleApiResponse = (data: ApiResponse["data"]) => ({
   data,
@@ -18,7 +19,7 @@ const createSampleApiResponse = (data: ApiResponse["data"]) => ({
 });
 
 describe("Construction of the client", () => {
-  let mockApiClient: JoystickApiClient;
+  let mockApiClient: ApiClient;
 
   it("CN-01 - independent instances", () => {
     const sut1 = new Joystick({
@@ -443,7 +444,7 @@ describe("Caching Logic", () => {
 });
 
 describe("Get Contents method call", () => {
-  let mockApiClient: JoystickApiClient;
+  let mockApiClient: ApiClient;
 
   it("GCS-01 - getContents receives valid contentIds", async () => {
     const sut = new Joystick({
@@ -494,6 +495,50 @@ describe("Get Contents method call", () => {
     sut.setCacheExpirationInSeconds(11);
 
     expect(sut.getCacheExpirationInSeconds()).toBe(11);
+  });
+
+  it("PCU-01 - publishContentUpdate", async () => {
+    mockApiClient = mock<ApiClient>();
+
+    when(() =>
+      mockApiClient.publishContentUpdate(
+        It.isObject({
+          contentId: "123",
+          payload: {
+            description: "description",
+          },
+        })
+      )
+    ).thenResolve();
+
+    const sut = new Joystick({
+      properties: {
+        apiKey: "123",
+      },
+      apiClient: mockApiClient,
+    });
+
+    await expect(() =>
+      sut.publishContentUpdate({
+        contentId: "  ",
+        payload: {
+          description: "description",
+          content: {
+            foo: "bar",
+          },
+        },
+      })
+    ).rejects.toThrow(InvalidArgumentError);
+
+    await sut.publishContentUpdate({
+      contentId: "123",
+      payload: {
+        description: "description",
+        content: {
+          foo: "bar",
+        },
+      },
+    });
   });
 
   it("getContent - responseType=serialized fullResponse=true", async () => {

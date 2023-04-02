@@ -1,19 +1,21 @@
 {
   "name": "@getjoystick/vanilla-js",
-  "version": "0.0.2-1",
+  "version": "0.0.1",
   "description": "Vanilla JS SDK for Joystick",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "./dist/**/*.js",
     "./dist/**/*.d.ts"
   ],
   "scripts": {
-    "build": "tsup --format=esm,cjs --minify",
+    "lint": "tsc",
+    "build": "tsup --format=esm,cjs --minify --treeshake",
     "pretest": "npm run build",
     "test": "jest",
-    "prepatch": "npm test",
-    "patch": "npm version prepatch"
+    "prerelease": "npm test",
+    "release": "npm version prerelease"
   },
   "author": "getjoystick",
   "license": "MIT",
@@ -57,6 +59,9 @@
     ],
     "dts": true,
     "splitting": false,
+    "sourcemap": true,
+    "skipNodeModulesBundle": true,
+    "bundle": true,
     "clean": true
   }
 }

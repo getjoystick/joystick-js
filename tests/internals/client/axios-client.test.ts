@@ -57,66 +57,72 @@ describe("test AxiosClient", () => {
   it("GCS-09 - ApiServerError - 500 Internal Server Error", async () => {
     const sut = new AxiosClient({ apiKey: "api.key", logger: new SdkLogger() });
 
-    mock.onPost("/ping").reply(500);
+    for (let status = 500; status < 600; status++) {
+      mock.onPost("/ping").reply(status);
 
-    await expect(() =>
-      sut.post({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiServerError);
+      await expect(() =>
+        sut.post({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiServerError);
 
-    mock.onPut("/ping").reply(599);
+      mock.onPut("/ping").reply(status);
 
-    await expect(() =>
-      sut.put({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiServerError);
+      await expect(() =>
+        sut.put({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiServerError);
+    }
   });
 
   it("GCS-09 - ApiBadRequestError - 400 Bad Request Error", async () => {
     const sut = new AxiosClient({ apiKey: "api.key", logger: new SdkLogger() });
 
-    mock.onPost("/ping").reply(400);
+    for (let status = 400; status < 500; status++) {
+      mock.onPost("/ping").reply(status);
 
-    await expect(() =>
-      sut.post({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiBadRequestError);
+      await expect(() =>
+        sut.post({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiBadRequestError);
 
-    mock.onPut("/ping").reply(499);
+      mock.onPut("/ping").reply(status);
 
-    await expect(() =>
-      sut.put({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiBadRequestError);
+      await expect(() =>
+        sut.put({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiBadRequestError);
+    }
   });
 
-  it("GCS-09 - ApiUnkownError - 301 Redirect", async () => {
+  it("GCS-09 - ApiUnkownError - <> 200", async () => {
     const sut = new AxiosClient({ apiKey: "api.key", logger: new SdkLogger() });
 
-    mock.onPost("/ping").reply(301);
+    for (let status = 201; status < 400; status++) {
+      mock.onPost("/ping").reply(status);
 
-    await expect(() =>
-      sut.post({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiUnkownError);
+      await expect(() =>
+        sut.post({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiUnkownError);
 
-    mock.onPut("/ping").reply(201);
+      mock.onPut("/ping").reply(status);
 
-    await expect(() =>
-      sut.put({
-        url: "/ping",
-        payload: {},
-      })
-    ).rejects.toThrow(ApiUnkownError);
+      await expect(() =>
+        sut.put({
+          url: "/ping",
+          payload: {},
+        })
+      ).rejects.toThrow(ApiUnkownError);
+    }
   });
 });

@@ -28,7 +28,7 @@ describe("test InMemoryCache", () => {
     expect(sut.getCacheSize()).toEqual(0);
   });
 
-  it("CCVD-05 - cacheExpirationInSeconds", () => {
+  it("CCVD-05 - cacheExpirationInSeconds - constructor", () => {
     expect(
       () =>
         new InMemoryCache({
@@ -40,10 +40,14 @@ describe("test InMemoryCache", () => {
     expect(
       () =>
         new InMemoryCache({
-          cacheExpirationInSeconds: -1,
+          cacheExpirationInSeconds: -2,
           logger: mock<Logger>(),
         })
-    ).toThrow(InvalidArgumentError);
+    ).toThrow(
+      new InvalidArgumentError(
+        "Invalid cacheExpirationInSeconds: <-2>. It should be equal or greater than 0"
+      )
+    );
   });
 
   it("get", async () => {
@@ -73,20 +77,18 @@ describe("test InMemoryCache", () => {
     expect(await cache.get("key")).toBeUndefined();
   });
 
-  it("setCacheExpirationInSeconds", () => {
+  it("CCVD-05 - setCacheExpirationInSeconds", () => {
     const logger = new SdkLogger();
 
-    const cache = new InMemoryCache({ cacheExpirationInSeconds: 10, logger });
+    const sut = new InMemoryCache({ cacheExpirationInSeconds: 10, logger });
 
-    expect(() => cache.setCacheExpirationInSeconds(-1)).toThrow(
-      InvalidArgumentError
+    expect(() => sut.setCacheExpirationInSeconds(-1)).toThrow(
+      new InvalidArgumentError(
+        "Invalid cacheExpirationInSeconds: <-1>. It should be equal or greater than 0"
+      )
     );
 
-    expect(() => cache.setCacheExpirationInSeconds(0)).toThrow(
-      InvalidArgumentError
-    );
-
-    expect(() => cache.setCacheExpirationInSeconds(1)).not.toThrow();
+    expect(() => sut.setCacheExpirationInSeconds(1)).not.toThrow();
   });
 
   it("checkLruMaxSize", async () => {

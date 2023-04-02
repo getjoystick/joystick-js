@@ -101,7 +101,7 @@ export class InMemoryCache implements SdkCache {
   private validateCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
     if (cacheExpirationInSeconds < 0) {
       throw new InvalidArgumentError(
-        `Invalid cacheExpirationInSeconds: ${cacheExpirationInSeconds}. It should be equal or greater than 0.`
+        `Invalid cacheExpirationInSeconds: <${cacheExpirationInSeconds}>. It should be equal or greater than 0`
       );
     }
   }
@@ -109,7 +109,7 @@ export class InMemoryCache implements SdkCache {
   private validateMaxItemsInCache(maxItemsInCache: number) {
     if (maxItemsInCache < 1) {
       throw new InvalidArgumentError(
-        `Invalid maxItemsInCache: ${maxItemsInCache}. It should be greater than 0.`
+        `Invalid maxItemsInCache: <${maxItemsInCache}>. It should be greater than 0`
       );
     }
   }

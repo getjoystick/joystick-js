@@ -13,8 +13,7 @@
     "pretest": "npm run build",
     "test": "jest",
     "prepatch": "npm test",
-    "patch": "npm version patch",
-    "publish": "npm publish"
+    "patch": "npm version patch"
   },
   "author": "getjoystick",
   "license": "MIT",

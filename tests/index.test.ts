@@ -151,7 +151,7 @@ describe("Construction of the client", () => {
             apiKey: " ",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid apiKey:  "));
+    ).toThrow(new InvalidArgumentError("Invalid apiKey: < >"));
 
     expect(
       () =>
@@ -160,7 +160,7 @@ describe("Construction of the client", () => {
             apiKey: "",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid apiKey: "));
+    ).toThrow(new InvalidArgumentError("Invalid apiKey: <>"));
   });
 
   it("CN-04 - constructor doesn't receive valid userId", () => {
@@ -172,7 +172,7 @@ describe("Construction of the client", () => {
             userId: " ",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid userId:  "));
+    ).toThrow(new InvalidArgumentError("Invalid userId: < >"));
 
     expect(
       () =>
@@ -194,7 +194,7 @@ describe("Construction of the client", () => {
             semVer: "2",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid semVer: 2"));
+    ).toThrow(new InvalidArgumentError("Invalid semVer: <2>"));
 
     expect(
       () =>
@@ -231,7 +231,7 @@ describe("Validation of Client configuration", () => {
             apiKey: "",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid apiKey: "));
+    ).toThrow(new InvalidArgumentError("Invalid apiKey: <>"));
 
     expect(
       () =>
@@ -240,7 +240,7 @@ describe("Validation of Client configuration", () => {
             apiKey: "  ",
           },
         })
-    ).toThrow(new InvalidArgumentError("Invalid apiKey:   "));
+    ).toThrow(new InvalidArgumentError("Invalid apiKey: <  >"));
   });
 
   it("CCVD-02 - getUserId", () => {
@@ -275,7 +275,7 @@ describe("Validation of Client configuration", () => {
     expect(sut.getUserId()).toBe("");
 
     expect(() => sut.setUserId(" ")).toThrow(
-      new InvalidArgumentError("Invalid userId:  ")
+      new InvalidArgumentError("Invalid userId: < >")
     );
   });
 
@@ -343,15 +343,15 @@ describe("Validation of Client configuration", () => {
     expect(sut.getSemVer()).toBe("1.3.4");
 
     expect(() => sut.setSemVer("2")).toThrowError(
-      new InvalidArgumentError("Invalid semVer: 2")
+      new InvalidArgumentError("Invalid semVer: <2>")
     );
 
     expect(() => sut.setSemVer("a.b.c")).toThrowError(
-      new InvalidArgumentError("Invalid semVer: a.b.c")
+      new InvalidArgumentError("Invalid semVer: <a.b.c>")
     );
 
     expect(() => sut.setSemVer("1 .2.4")).toThrowError(
-      new InvalidArgumentError("Invalid semVer: 1 .2.4")
+      new InvalidArgumentError("Invalid semVer: <1 .2.4>")
     );
 
     expect(sut.getSemVer()).toBe("1.3.4");
@@ -488,7 +488,7 @@ describe("Get Contents method call", () => {
     expect(sut.getCacheExpirationInSeconds()).toBe(9998);
 
     expect(() => sut.setCacheExpirationInSeconds(-1)).toThrow(
-      "Invalid cacheExpirationInSeconds: -1"
+      "Invalid cacheExpirationInSeconds: <-1>"
     );
 
     sut.setCacheExpirationInSeconds(11);

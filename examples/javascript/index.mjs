@@ -17,3 +17,12 @@ joystick
     }
   })
   .then(r => console.log(r))
+
+joystick
+  .getContent({
+    contentId: "first_config", options: {
+      fullResponse: true,
+      serialized: true
+    }
+  })
+  .then(r => console.log(r))

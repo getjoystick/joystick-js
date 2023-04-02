@@ -29,7 +29,7 @@ export class AxiosClient implements HttpClient {
       },
       responseEncoding: "UTF-8",
       responseType: "json",
-      validateStatus: (status) => status === 200,
+      validateStatus: (status: number) => status === 200,
     });
   }
 

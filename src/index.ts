@@ -40,14 +40,12 @@ export class Joystick {
     logger?: Logger;
     cache?: SdkCache;
   }) {
-    const { semVer, userId, apiKey } = properties;
+    const { semVer, userId, apiKey, options } = properties;
 
     this.validateApiKey(apiKey);
     this.validateUserId(userId);
     this.validateSemVer(semVer);
-    this.validateCacheExpirationInSeconds(
-      properties.options?.cacheExpirationInSeconds
-    );
+    this.validateCacheExpirationInSeconds(options?.cacheExpirationInSeconds);
 
     this.properties = properties;
 
@@ -71,23 +69,8 @@ export class Joystick {
       });
   }
 
-  /**
-   * Get the value of parameter key.
-   *
-   * TValue can be used to specify a concret return type, like a object.
-   * @example
-   *  const value=getParamValue<{name:string}>("key");
-   *
-   *  console.log(value?.name);
-   *
-   * Default use case:
-   * @example
-   *  const value=getParamValue("key");
-   *
-   *  console.log(value);
-   */
-  getParamValue<TValue>(key: string): TValue | undefined {
-    return this.properties.params?.[key] as TValue;
+  getParamValue(key: string): unknown {
+    return this.properties.params?.[key];
   }
 
   setParamValue(key: string, value: unknown): void {
@@ -204,10 +187,10 @@ export class Joystick {
       return content;
     }
 
-    return this.simpleResponse(content);
+    return this.simplifyResponse(content);
   }
 
-  private simpleResponse(freshContent: Record<string, ApiResponse>) {
+  private simplifyResponse(freshContent: Record<string, ApiResponse>) {
     return Object.entries(freshContent).reduce(
       (acc, [key, value]) => ({
         ...acc,
@@ -226,7 +209,7 @@ export class Joystick {
       this.getParamsSortedByKeyAsc(this.getParams()),
       this.getSemVer(),
       this.getUserId(),
-      contentIds.sort(),
+      [...contentIds].sort(),
       options?.serialized ?? this.properties.options?.serialized,
       options?.fullResponse ?? false,
     ];
@@ -269,6 +252,7 @@ export class Joystick {
 
   private validateContentIds(contentIds: string[]) {
     if (
+      !contentIds ||
       contentIds.length == 0 ||
       contentIds.some((contentId) => !contentId.trim())
     ) {
@@ -280,7 +264,7 @@ export class Joystick {
 
   private validateApiKey(apiKey: string) {
     if (!apiKey || !apiKey.trim()) {
-      throw new InvalidArgumentError(`Invalid apiKey: ${apiKey}`);
+      throw new InvalidArgumentError(`Invalid apiKey: <${apiKey}>`);
     }
   }
 
@@ -289,20 +273,20 @@ export class Joystick {
   ) {
     if (cacheExpirationInSeconds != undefined && cacheExpirationInSeconds < 0) {
       throw new InvalidArgumentError(
-        `Invalid cacheExpirationInSeconds: ${cacheExpirationInSeconds}`
+        `Invalid cacheExpirationInSeconds: <${cacheExpirationInSeconds}>`
       );
     }
   }
 
   private validateSemVer(semVer: string | undefined) {
     if (semVer && !SEM_VER_REG_EXP.test(semVer)) {
-      throw new InvalidArgumentError(`Invalid semVer: ${semVer}`);
+      throw new InvalidArgumentError(`Invalid semVer: <${semVer}>`);
     }
   }
 
   private validateUserId(userId: string | undefined) {
     if (userId && !userId.trim()) {
-      throw new InvalidArgumentError(`Invalid userId: ${userId}`);
+      throw new InvalidArgumentError(`Invalid userId: <${userId}>`);
     }
   }
 }

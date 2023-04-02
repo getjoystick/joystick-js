@@ -650,10 +650,6 @@ describe("Get Contents method call", () => {
     sut.setParamValue("key", { name: "Miguel" });
 
     expect(spyClearCache).toHaveBeenCalledTimes(4);
-
-    const paramValue = sut.getParamValue<{ name: string }>("key");
-
-    expect(paramValue?.name).toBe("Miguel");
   });
 
   it("call API", async () => {

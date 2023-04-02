@@ -2,6 +2,8 @@ import { InMemoryCache } from "../../../src/internals/cache/in-memory-cache";
 import { SdkLogger } from "../../../src/internals/logger/sdk-logger";
 import { InvalidArgumentError } from "../../../src/errors/invalid-argument-error";
 import { ApiResponse } from "../../../src/models/api-response";
+import { mock } from "strong-mock";
+import { Logger } from "../../../src/internals/logger/logger";
 
 const createSampleApiResponse = (data: ApiResponse["data"]) => ({
   data,
@@ -24,6 +26,24 @@ describe("test InMemoryCache", () => {
     });
 
     expect(sut.getCacheSize()).toEqual(0);
+  });
+
+  it("CCVD-05 - cacheExpirationInSeconds", () => {
+    expect(
+      () =>
+        new InMemoryCache({
+          cacheExpirationInSeconds: 0,
+          logger: mock<Logger>(),
+        })
+    ).not.toThrow();
+
+    expect(
+      () =>
+        new InMemoryCache({
+          cacheExpirationInSeconds: -1,
+          logger: mock<Logger>(),
+        })
+    ).toThrow(InvalidArgumentError);
   });
 
   it("get", async () => {

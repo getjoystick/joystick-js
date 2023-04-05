@@ -19,10 +19,13 @@ joystick
   .then(r => console.log(r))
 
 joystick
-  .getContent({
-    contentId: "first_config", options: {
-      fullResponse: true,
-      serialized: true
+  .publishContentUpdate({
+    contentId: "first_config",
+    payload: {
+      description: "Second attempt",
+      content: {
+        "name": "Miguel 2nd"
+      }
     }
   })
-  .then(r => console.log(r))
+  .then(r => console.log("Done"))

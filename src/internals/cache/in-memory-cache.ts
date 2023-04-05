@@ -82,7 +82,9 @@ export class InMemoryCache implements SdkCache {
   }
 
   private checkLruMaxSize() {
-    if (this.cache.size <= this.maxItemsInCache) return;
+    if (this.cache.size <= this.maxItemsInCache) {
+      return;
+    }
 
     const keysToDelete = [...this.cache.entries()]
       .sort(

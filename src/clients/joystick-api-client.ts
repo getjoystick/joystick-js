@@ -73,7 +73,7 @@ export class JoystickApiClient implements ApiClient {
   }
 
   private validateDescription(description: string) {
-    if (description.length < 1 || description.length > 50) {
+    if (!description || description.length < 1 || description.length > 50) {
       throw new InvalidArgumentError(
         `Invalid description: ${description}. It should be between 1 and 50 characters long`
       );

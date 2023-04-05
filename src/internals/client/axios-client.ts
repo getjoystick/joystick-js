@@ -4,6 +4,7 @@ import { HttpClient } from "./http-client";
 import { ApiUnkownError } from "../../errors/api-unkown-error";
 import { ApiServerError } from "../../errors/api-server-error";
 import { ApiBadRequestError } from "../../errors/api-bad-request-error";
+import { InvalidArgumentError } from "../../errors/invalid-argument-error";
 
 export class AxiosClient implements HttpClient {
   private readonly client: AxiosInstance;
@@ -18,6 +19,8 @@ export class AxiosClient implements HttpClient {
     timeoutInMs?: number;
     logger: Logger;
   }) {
+    this.validateApiKey(apiKey);
+
     this.logger = logger;
 
     this.client = axios.create({
@@ -31,6 +34,12 @@ export class AxiosClient implements HttpClient {
       responseType: "json",
       validateStatus: (status: number) => status === 200,
     });
+  }
+
+  private validateApiKey(apiKey: string) {
+    if (!apiKey || !apiKey.trim()) {
+      throw new InvalidArgumentError(`Invalid apiKey: <${apiKey}>`);
+    }
   }
 
   async put({

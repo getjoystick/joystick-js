@@ -1,4 +1,3 @@
-import { Joystick } from "@getjoystick/vanilla-js";
 import * as dotenv from "dotenv";
 import { NodeCacheImpl } from "./node-cache";
 

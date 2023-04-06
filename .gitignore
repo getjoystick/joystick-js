@@ -5,3 +5,4 @@ coverage
 dist
 test-api.sh
 *.js
+package-lock.json

@@ -10,7 +10,7 @@ export async function sha256ToHex<T extends string | unknown[]>(
 ): Promise<string> {
   const massagedData = typeof data === "string" ? data : JSON.stringify(data);
 
-  const hashBuffer = await crypto.subtle.digest(
+  const hashBuffer = await (crypto.subtle || crypto).digest(
     "SHA-256",
     new TextEncoder().encode(massagedData)
   );

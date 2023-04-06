@@ -2,6 +2,10 @@ name: Testing package
 
 on:
   workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease'
+        required: true
 
 jobs:
   build:

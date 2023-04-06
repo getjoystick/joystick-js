@@ -1,4 +1,6 @@
-import * as crypto from "crypto";
+import { Crypto } from "@peculiar/webcrypto";
+
+const crypto = new Crypto();
 
 const toHex = (hashBuffer: ArrayBuffer): string =>
   Array.from(new Uint8Array(hashBuffer))
@@ -10,7 +12,7 @@ export async function sha256ToHex<T extends string | unknown[]>(
 ): Promise<string> {
   const massagedData = typeof data === "string" ? data : JSON.stringify(data);
 
-  const hashBuffer = await (crypto.subtle || crypto).digest(
+  const hashBuffer = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(massagedData)
   );

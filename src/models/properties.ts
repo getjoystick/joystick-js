@@ -4,7 +4,7 @@ export interface Properties {
   semVer?: string;
   params?: Record<string, unknown>;
   options?: {
-    cacheExpirationInSeconds: number;
+    cacheExpirationSeconds?: number;
     serialized?: boolean;
   };
 }

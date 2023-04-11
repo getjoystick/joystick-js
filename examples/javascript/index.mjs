@@ -1,5 +1,5 @@
-import {Joystick} from "@getjoystick/vanilla-js";
 import * as dotenv from "dotenv";
+import {Joystick} from "@getjoystick/joystick-js";
 
 dotenv.config();
 

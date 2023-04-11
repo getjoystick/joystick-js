@@ -1,21 +1,13 @@
 export interface HttpClient {
-  post({
-    url,
-    payload,
-    params,
-  }: {
-    url: string;
-    payload: Record<string, unknown>;
-    params?: Record<string, unknown>;
-  }): Promise<Record<string, unknown>>;
+  post(
+    url: string,
+    payload: Record<string, unknown>,
+    queryParams?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
 
-  put({
-    url,
-    payload,
-    params,
-  }: {
-    url: string;
-    payload: Record<string, unknown>;
-    params?: Record<string, unknown>;
-  }): Promise<void>;
+  put(
+    url: string,
+    payload: Record<string, unknown>,
+    queryParams?: Record<string, unknown>
+  ): Promise<void>;
 }

@@ -18,16 +18,14 @@ describe("test JoystickApiClient", () => {
 
     when(() =>
       mockClient.post(
+        "https://api.getjoystick.com/api/v1/combine/",
         It.isObject({
-          url: "https://api.getjoystick.com/api/v1/combine/",
-          payload: {
-            u: "",
-            p: {},
-          },
-          params: {
-            c: '["123456789012345678901234567"]',
-            dynamic: "true",
-          },
+          u: "",
+          p: {},
+        }),
+        It.isObject({
+          c: '["123456789012345678901234567"]',
+          dynamic: "true",
         })
       )
     ).thenResolve({
@@ -48,17 +46,11 @@ describe("test JoystickApiClient", () => {
 
     const logger = new SdkLogger();
 
-    const sut = new JoystickApiClient({
-      client: mockClient,
-      logger,
-    });
+    const sut = new JoystickApiClient(mockClient, logger);
 
     expect(
-      await sut.getDynamicContent({
-        contentIds: ["123456789012345678901234567"],
-        payload: {
-          params: {},
-        },
+      await sut.getDynamicContent(["123456789012345678901234567"], {
+        params: {},
       })
     ).toEqual({
       123456789012345678901234567: {
@@ -82,16 +74,14 @@ describe("test JoystickApiClient", () => {
 
     when(() =>
       mockClient.post(
+        "https://api.getjoystick.com/api/v1/combine/",
         It.isObject({
-          url: "https://api.getjoystick.com/api/v1/combine/",
-          payload: {
-            u: "",
-            p: {},
-          },
-          params: {
-            c: '["123456789012345678901234567","223456789012345678901234568"]',
-            dynamic: "true",
-          },
+          u: "",
+          p: {},
+        }),
+        It.isObject({
+          c: '["123456789012345678901234567","223456789012345678901234568"]',
+          dynamic: "true",
         })
       )
     ).thenResolve({
@@ -113,21 +103,15 @@ describe("test JoystickApiClient", () => {
 
     const logger = new SdkLogger();
 
-    const sut = new JoystickApiClient({
-      client: mockClient,
-      logger,
-    });
+    const sut = new JoystickApiClient(mockClient, logger);
 
     await expect(() =>
-      sut.getDynamicContent({
-        contentIds: [
-          "123456789012345678901234567",
-          "223456789012345678901234568",
-        ],
-        payload: {
+      sut.getDynamicContent(
+        ["123456789012345678901234567", "223456789012345678901234568"],
+        {
           params: {},
-        },
-      })
+        }
+      )
     ).rejects.toThrow(
       new MultipleContentsApiError("- Error 401 - Something went wrong")
     );
@@ -138,17 +122,15 @@ describe("test JoystickApiClient", () => {
 
     when(() =>
       mockClient.post(
+        "https://api.getjoystick.com/api/v1/combine/",
         It.isObject({
-          url: "https://api.getjoystick.com/api/v1/combine/",
-          payload: {
-            u: "",
-            p: {},
-          },
-          params: {
-            c: '["223456789012345678901234568"]',
-            dynamic: "true",
-            responseType: "serialized",
-          },
+          u: "",
+          p: {},
+        }),
+        It.isObject({
+          c: '["223456789012345678901234568"]',
+          dynamic: "true",
+          responseType: "serialized",
         })
       )
     ).thenResolve({
@@ -169,19 +151,16 @@ describe("test JoystickApiClient", () => {
 
     const logger = new SdkLogger();
 
-    const sut = new JoystickApiClient({
-      client: mockClient,
-      logger,
-    });
+    const sut = new JoystickApiClient(mockClient, logger);
 
     expect(
-      await sut.getDynamicContent({
-        contentIds: ["223456789012345678901234568"],
-        payload: {
+      await sut.getDynamicContent(
+        ["223456789012345678901234568"],
+        {
           params: {},
         },
-        responseType: "serialized",
-      })
+        "serialized"
+      )
     ).toEqual({
       223456789012345678901234568: {
         data: '{"content":{"id":"1234567890"}}',

@@ -1,11 +1,11 @@
 import { ApiResponse } from "../../models/api-response";
 
 export interface SdkCache {
-  clear(): void;
+  clear(): Promise<void>;
 
-  set(key: string, value: Record<string, ApiResponse>): void;
+  set(key: string, value: Record<string, ApiResponse>): Promise<void>;
 
   get(key: string): Promise<Record<string, ApiResponse> | undefined>;
 
-  setCacheExpirationInSeconds(cacheExpirationInSeconds: number): void;
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void>;
 }

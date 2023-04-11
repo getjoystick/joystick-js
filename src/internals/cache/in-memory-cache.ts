@@ -5,8 +5,8 @@ import { InvalidArgumentError } from "../../errors/invalid-argument-error";
 
 interface CacheValue {
   value: Record<string, ApiResponse>;
-  cachedAtTimestampInMs: number;
-  lastAccessedAtTimestampInMs: number;
+  cachedAtTimestampMs: number;
+  lastAccessedAtTimestampMs: number;
 }
 
 /**
@@ -14,26 +14,21 @@ interface CacheValue {
  */
 export class InMemoryCache implements SdkCache {
   private readonly cache: Map<string, CacheValue>;
-  private cacheExpirationInMs: number;
+  private cacheExpirationMs: number;
   private readonly logger: Logger;
   private readonly maxItemsInCache: number;
   private readonly nowFn: () => number;
 
-  constructor({
-    cacheExpirationInSeconds,
-    logger,
-    maxItemsInCache = 1_000,
-    nowFn = Date.now,
-  }: {
-    cacheExpirationInSeconds: number;
-    logger: Logger;
-    maxItemsInCache?: number;
-    nowFn?: () => number;
-  }) {
-    this.validateCacheExpirationInSeconds(cacheExpirationInSeconds);
+  constructor(
+    cacheExpirationSeconds: number,
+    logger: Logger,
+    maxItemsInCache: number = 1_000,
+    nowFn: () => number = Date.now
+  ) {
+    this.validateCacheExpirationSeconds(cacheExpirationSeconds);
     this.validateMaxItemsInCache(maxItemsInCache);
 
-    this.cacheExpirationInMs = cacheExpirationInSeconds * 1_000;
+    this.cacheExpirationMs = cacheExpirationSeconds * 1_000;
     this.logger = logger;
     this.maxItemsInCache = maxItemsInCache;
     this.nowFn = nowFn;
@@ -41,24 +36,28 @@ export class InMemoryCache implements SdkCache {
     this.cache = new Map<string, CacheValue>();
   }
 
-  setCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
-    this.validateCacheExpirationInSeconds(cacheExpirationInSeconds);
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
+    this.validateCacheExpirationSeconds(cacheExpirationSeconds);
 
-    this.cacheExpirationInMs = cacheExpirationInSeconds * 1_000;
+    this.cacheExpirationMs = cacheExpirationSeconds * 1_000;
+
+    return Promise.resolve();
   }
 
   getCacheSize(): number {
     return this.cache.size;
   }
 
-  set(key: string, value: Record<string, ApiResponse>): void {
+  set(key: string, value: Record<string, ApiResponse>): Promise<void> {
     this.cache.set(key, {
       value,
-      cachedAtTimestampInMs: this.nowFn(),
-      lastAccessedAtTimestampInMs: this.nowFn(),
+      cachedAtTimestampMs: this.nowFn(),
+      lastAccessedAtTimestampMs: this.nowFn(),
     });
 
     this.checkLruMaxSize();
+
+    return Promise.resolve();
   }
 
   get(key: string): Promise<Record<string, ApiResponse> | undefined> {
@@ -68,17 +67,17 @@ export class InMemoryCache implements SdkCache {
       return Promise.resolve(undefined);
     }
 
-    result.lastAccessedAtTimestampInMs = this.nowFn();
+    result.lastAccessedAtTimestampMs = this.nowFn();
 
     return Promise.resolve(result.value);
   }
 
-  private isExpired({ cachedAtTimestampInMs }: CacheValue) {
-    return cachedAtTimestampInMs + this.cacheExpirationInMs < this.nowFn();
+  private isExpired({ cachedAtTimestampMs }: CacheValue) {
+    return cachedAtTimestampMs + this.cacheExpirationMs < this.nowFn();
   }
 
-  clear(): void {
-    this.cache.clear();
+  async clear(): Promise<void> {
+    await this.cache.clear();
   }
 
   private checkLruMaxSize() {
@@ -89,8 +88,8 @@ export class InMemoryCache implements SdkCache {
     const keysToDelete = [...this.cache.entries()]
       .sort(
         ([, leftValue], [, rightValue]) =>
-          rightValue.lastAccessedAtTimestampInMs -
-          leftValue.lastAccessedAtTimestampInMs
+          rightValue.lastAccessedAtTimestampMs -
+          leftValue.lastAccessedAtTimestampMs
       )
       .slice(this.maxItemsInCache)
       .map(([key]) => key);
@@ -100,10 +99,10 @@ export class InMemoryCache implements SdkCache {
     keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
-  private validateCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
-    if (cacheExpirationInSeconds < 0) {
+  private validateCacheExpirationSeconds(cacheExpirationSeconds: number) {
+    if (cacheExpirationSeconds < 0) {
       throw new InvalidArgumentError(
-        `Invalid cacheExpirationInSeconds: <${cacheExpirationInSeconds}>. It should be equal or greater than 0`
+        `Invalid cacheExpirationSeconds: <${cacheExpirationSeconds}>. It should be equal or greater than 0`
       );
     }
   }

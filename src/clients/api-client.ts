@@ -3,21 +3,14 @@ import { ApiResponse } from "../models/api-response";
 import { PublishContentUpdatePayload } from "../models/publish-content-update-payload";
 
 export interface ApiClient {
-  getDynamicContent({
-    contentIds,
-    payload,
-    responseType,
-  }: {
-    contentIds: string[];
-    payload: GetDynamicContentPayload;
-    responseType?: "serialized";
-  }): Promise<Record<string, ApiResponse>>;
+  getDynamicContent(
+    contentIds: string[],
+    payload: GetDynamicContentPayload,
+    responseType?: "serialized"
+  ): Promise<Record<string, ApiResponse>>;
 
-  publishContentUpdate({
-    contentId,
-    payload,
-  }: {
-    contentId: string;
-    payload: PublishContentUpdatePayload;
-  }): Promise<void>;
+  publishContentUpdate(
+    contentId: string,
+    payload: PublishContentUpdatePayload
+  ): Promise<void>;
 }

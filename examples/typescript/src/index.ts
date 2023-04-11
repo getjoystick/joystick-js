@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
 import { NodeCacheImpl } from "./node-cache";
+import { Joystick } from "@getjoystick/joystick-js";
 
 dotenv.config();
 
@@ -7,7 +8,7 @@ const joystick = new Joystick({
   properties: {
     apiKey: process.env.JOYSTICK_API_KEY || "",
     options: {
-      cacheExpirationInSeconds: 2,
+      cacheExpirationSeconds: 2,
     },
   },
   cache: new NodeCacheImpl(2),

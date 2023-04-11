@@ -11,35 +11,31 @@ export class JoystickApiClient implements ApiClient {
   private readonly client: HttpClient;
   private readonly logger: Logger;
 
-  constructor({ client, logger }: { client: HttpClient; logger: Logger }) {
+  constructor(client: HttpClient, logger: Logger) {
     this.client = client;
     this.logger = logger;
   }
 
-  async getDynamicContent({
-    contentIds,
-    payload,
-    responseType,
-  }: {
-    contentIds: string[];
-    payload: GetDynamicContentPayload;
-    responseType?: "serialized";
-  }): Promise<Record<string, ApiResponse>> {
+  async getDynamicContent(
+    contentIds: string[],
+    payload: GetDynamicContentPayload,
+    responseType?: "serialized"
+  ): Promise<Record<string, ApiResponse>> {
     const { params, semVer, userId = "" } = payload;
 
-    const response = await this.client.post({
-      url: "https://api.getjoystick.com/api/v1/combine/",
-      payload: {
+    const response = await this.client.post(
+      "https://api.getjoystick.com/api/v1/combine/",
+      {
         u: userId,
         v: semVer,
         p: params,
       },
-      params: {
+      {
         c: JSON.stringify(contentIds),
         dynamic: "true",
         responseType,
-      },
-    });
+      }
+    );
 
     this.checkForErrors(response);
 
@@ -49,27 +45,24 @@ export class JoystickApiClient implements ApiClient {
     );
   }
 
-  async publishContentUpdate({
-    contentId,
-    payload,
-  }: {
-    contentId: string;
-    payload: PublishContentUpdatePayload;
-  }): Promise<void> {
+  async publishContentUpdate(
+    contentId: string,
+    payload: PublishContentUpdatePayload
+  ): Promise<void> {
     const { description, content, dynamicContentMap = [] } = payload;
 
     this.validateDescription(description);
     this.validateContent(content);
     this.validateDynamicContentMap(dynamicContentMap);
 
-    await this.client.put({
-      url: `https://capi.getjoystick.com/api/v1/config/${contentId}`,
-      payload: {
+    await this.client.put(
+      `https://capi.getjoystick.com/api/v1/config/${contentId}`,
+      {
         d: description,
         c: content,
         m: dynamicContentMap,
-      },
-    });
+      }
+    );
   }
 
   private validateDescription(description: string) {

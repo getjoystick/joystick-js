@@ -23,19 +23,15 @@ describe("Construction of the client", () => {
 
   it("CN-01 - independent instances", () => {
     const sut1 = new Joystick({
-      properties: {
-        apiKey: "FIRST-API-KEY",
-      },
+      apiKey: "FIRST-API-KEY",
     });
 
     expect(sut1.getApiKey()).toBe("FIRST-API-KEY");
     expect(sut1.getUserId()).toBeUndefined();
 
     const sut2 = new Joystick({
-      properties: {
-        apiKey: "SECOND-API-KEY",
-        userId: "USER-ID-UNKNOWN",
-      },
+      apiKey: "SECOND-API-KEY",
+      userId: "USER-ID-UNKNOWN",
     });
 
     expect(sut2.getApiKey()).toBe("SECOND-API-KEY");
@@ -49,86 +45,74 @@ describe("Construction of the client", () => {
     mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
-      mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
+      mockApiClient.getDynamicContent(["10"], It.isObject({}))
     ).thenResolve({
       10: createSampleApiResponse({ title: "initial-data-from-http" }),
     });
 
-    const sut1 = new Joystick({
-      properties: {
+    const sut1 = new Joystick(
+      {
         apiKey: "123",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
     expect(sut1.getApiKey()).toBe("123");
     expect(sut1.getUserId()).toBeUndefined();
 
     // from http
-    expect(await sut1.getContent({ contentId: "10" })).toEqual({
-      "10": {
-        title: "initial-data-from-http",
-      },
+    expect(await sut1.getContent("10")).toEqual({
+      title: "initial-data-from-http",
     });
 
     when(() =>
-      mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
+      mockApiClient.getDynamicContent(["10"], It.isObject({}))
     ).thenResolve({
       10: createSampleApiResponse({ title: "fresh-data-from-http" }),
     });
 
     // from cache
-    expect(await sut1.getContent({ contentId: "10" })).toEqual({
-      "10": {
-        title: "initial-data-from-http",
-      },
+    expect(await sut1.getContent("10")).toEqual({
+      title: "initial-data-from-http",
     });
 
-    const sut2 = new Joystick({
-      properties: {
+    const sut2 = new Joystick(
+      {
         apiKey: "231",
         userId: "USER-ID-UNKNOWN",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
     expect(sut2.getApiKey()).toBe("231");
     expect(sut2.getUserId()).toBe("USER-ID-UNKNOWN");
 
     // from http - so cache is not shared
-    expect(await sut2.getContent({ contentId: "10" })).toEqual({
-      "10": {
-        title: "fresh-data-from-http",
-      },
+    expect(await sut2.getContent("10")).toEqual({
+      title: "fresh-data-from-http",
     });
 
-    when(() =>
-      mockApiClient.getDynamicContent(It.isObject({ contentIds: ["10"] }))
-    ).thenResolve({
+    when(() => mockApiClient.getDynamicContent(["10"], {})).thenResolve({
       10: createSampleApiResponse({ title: "most-fresh-data-from-http" }),
     });
 
     // from cache
-    expect(await sut2.getContent({ contentId: "10" })).toEqual({
-      "10": {
-        title: "fresh-data-from-http",
-      },
+    expect(await sut2.getContent("10")).toEqual({
+      title: "fresh-data-from-http",
     });
   });
 
   it("CN-03 - should accept all possible parameters in the form of single object", () => {
     const sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        userId: "456",
-        semVer: "2.1.0",
-        params: {
-          test: "test1",
-        },
-        options: {
-          cacheExpirationInSeconds: 9999,
-          serialized: true,
-        },
+      apiKey: "123",
+      userId: "456",
+      semVer: "2.1.0",
+      params: {
+        test: "test1",
+      },
+      options: {
+        cacheExpirationSeconds: 9999,
+        serialized: true,
       },
     });
 
@@ -141,25 +125,21 @@ describe("Construction of the client", () => {
     expect(sut.getParamValue("test")).toBe("test1");
     expect(sut.getParamValue("test")).toBe("test1");
     expect(sut.getParamValue("unknow-key")).toBeUndefined();
-    expect(sut.getCacheExpirationInSeconds()).toBe(9999);
+    expect(sut.getCacheExpirationSeconds()).toBe(9999);
   });
 
   it("CN-04 - constructor doesn't receive valid API key", () => {
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: " ",
-          },
+          apiKey: " ",
         })
     ).toThrow(new InvalidArgumentError("Invalid apiKey: < >"));
 
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "",
-          },
+          apiKey: "",
         })
     ).toThrow(new InvalidArgumentError("Invalid apiKey: <>"));
   });
@@ -168,20 +148,16 @@ describe("Construction of the client", () => {
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "SOME-KEY",
-            userId: " ",
-          },
+          apiKey: "SOME-KEY",
+          userId: " ",
         })
     ).toThrow(new InvalidArgumentError("Invalid userId: < >"));
 
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "SOME-KEY",
-            userId: "",
-          },
+          apiKey: "SOME-KEY",
+          userId: "",
         })
     ).not.toThrow(InvalidArgumentError);
   });
@@ -190,20 +166,16 @@ describe("Construction of the client", () => {
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "SOME-KEY",
-            semVer: "2",
-          },
+          apiKey: "SOME-KEY",
+          semVer: "2",
         })
     ).toThrow(new InvalidArgumentError("Invalid semVer: <2>"));
 
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "SOME-KEY",
-            semVer: "0.0.2",
-          },
+          apiKey: "SOME-KEY",
+          semVer: "0.0.2",
         })
     ).not.toThrow(InvalidArgumentError);
   });
@@ -218,9 +190,7 @@ describe("Construction of the client", () => {
 describe("Validation of Client configuration", () => {
   it("CCVD-01 - only apiKey required", () => {
     const sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
     expect(sut.getApiKey()).toBe("123");
@@ -228,37 +198,29 @@ describe("Validation of Client configuration", () => {
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "",
-          },
+          apiKey: "",
         })
     ).toThrow(new InvalidArgumentError("Invalid apiKey: <>"));
 
     expect(
       () =>
         new Joystick({
-          properties: {
-            apiKey: "  ",
-          },
+          apiKey: "  ",
         })
     ).toThrow(new InvalidArgumentError("Invalid apiKey: <  >"));
   });
 
   it("CCVD-02 - getUserId", () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        params: {},
-      },
+      apiKey: "123",
+      params: {},
     });
 
     expect(sut.getUserId()).toBeUndefined();
 
     sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        userId: "456",
-      },
+      apiKey: "123",
+      userId: "456",
     });
 
     expect(sut.getUserId()).toBe("456");
@@ -266,6 +228,13 @@ describe("Validation of Client configuration", () => {
     sut.setUserId("789");
 
     expect(sut.getUserId()).toBe("789");
+
+    expect(sut.getSerialized()).toBeUndefined();
+
+    sut.setSerialized(true);
+
+    expect(sut.getSerialized()).toBe(true);
+    expect(sut.getSerialized(false)).toBe(false);
 
     sut.setUserId(undefined);
 
@@ -282,21 +251,17 @@ describe("Validation of Client configuration", () => {
 
   it("CCVD-03 - getParams", () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        params: {},
-      },
+      apiKey: "123",
+      params: {},
     });
 
     expect(sut.getParams()).toEqual({});
 
     sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        params: {
-          foo: "bar",
-          name: "some-name",
-        },
+      apiKey: "123",
+      params: {
+        foo: "bar",
+        name: "some-name",
       },
     });
 
@@ -327,18 +292,14 @@ describe("Validation of Client configuration", () => {
 
   it("CCVD-04 - getSemVer", () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
     expect(sut.getSemVer()).toBeUndefined();
 
     sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        semVer: "1.3.4",
-      },
+      apiKey: "123",
+      semVer: "1.3.4",
     });
 
     expect(sut.getSemVer()).toBe("1.3.4");
@@ -366,33 +327,29 @@ describe("Validation of Client configuration", () => {
     expect(sut.getSemVer()).toBeUndefined();
   });
 
-  it("CCVD-05 - getCacheExpirationInSeconds", () => {
+  it("CCVD-05 - getCacheExpirationSeconds", async () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(300);
+    expect(sut.getCacheExpirationSeconds()).toBe(300);
 
     sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        options: {
-          cacheExpirationInSeconds: 10,
-        },
+      apiKey: "123",
+      options: {
+        cacheExpirationSeconds: 10,
       },
     });
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(10);
+    expect(sut.getCacheExpirationSeconds()).toBe(10);
 
-    expect(() => sut.setCacheExpirationInSeconds(-20)).toThrowError(
-      "Invalid cacheExpirationInSeconds"
-    );
+    expect(
+      async () => await sut.setCacheExpirationSeconds(-20)
+    ).rejects.toThrowError("Invalid cacheExpirationSeconds");
 
-    sut.setCacheExpirationInSeconds(11);
+    await sut.setCacheExpirationSeconds(11);
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(11);
+    expect(sut.getCacheExpirationSeconds()).toBe(11);
   });
 });
 
@@ -401,27 +358,35 @@ describe("Caching Logic", () => {
     let cleared = false;
 
     class MyCache implements SdkCache {
-      clear(): void {
+      clear(): Promise<void> {
         cleared = true;
+
+        return Promise.resolve();
       }
 
       get(key: string): Promise<Record<string, ApiResponse> | undefined> {
         return Promise.resolve(undefined);
       }
 
-      set(key: string, value: Record<string, ApiResponse>): void {}
+      set(key: string, value: Record<string, ApiResponse>): Promise<void> {
+        return Promise.resolve();
+      }
 
-      setCacheExpirationInSeconds(cacheExpirationInSeconds: number): void {}
+      setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
+        return Promise.resolve();
+      }
     }
 
     const cache = new MyCache();
 
-    const sut = new Joystick({
-      properties: {
+    const sut = new Joystick(
+      {
         apiKey: "123",
       },
-      cache,
-    });
+      undefined,
+      undefined,
+      cache
+    );
 
     expect(sut.getCache()).toBeInstanceOf(MyCache);
 
@@ -434,9 +399,7 @@ describe("Caching Logic", () => {
 
   it("CL-02 - In Memory cache", () => {
     const sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
     expect(sut.getCache()).toBeInstanceOf(InMemoryCache);
@@ -448,53 +411,45 @@ describe("Get Contents method call", () => {
 
   it("GCS-01 - getContents receives valid contentIds", async () => {
     const sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
-    await expect(() => sut.getContents({ contentIds: [] })).rejects.toThrow(
+    await expect(() => sut.getContents([])).rejects.toThrow(
       new InvalidArgumentError(
         "The contentIds parameter must be a non-empty array of strings"
       )
     );
 
-    await expect(() =>
-      sut.getContents({ contentIds: ["1", "", "3"] })
-    ).rejects.toThrow(
+    await expect(() => sut.getContents(["1", "", "3"])).rejects.toThrow(
       new InvalidArgumentError(
         "The contentIds parameter must be a non-empty array of strings"
       )
     );
   });
 
-  it("default cacheExpirationInSeconds", () => {
+  it("default cacheExpirationSeconds", async () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "111312",
-      },
+      apiKey: "111312",
     });
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(300);
+    expect(sut.getCacheExpirationSeconds()).toBe(300);
 
     sut = new Joystick({
-      properties: {
-        apiKey: "111312",
-        options: {
-          cacheExpirationInSeconds: 9998,
-        },
+      apiKey: "111312",
+      options: {
+        cacheExpirationSeconds: 9998,
       },
     });
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(9998);
+    expect(sut.getCacheExpirationSeconds()).toBe(9998);
 
-    expect(() => sut.setCacheExpirationInSeconds(-1)).toThrow(
-      "Invalid cacheExpirationInSeconds: <-1>"
+    expect(async () => await sut.setCacheExpirationSeconds(-1)).rejects.toThrow(
+      "Invalid cacheExpirationSeconds: <-1>"
     );
 
-    sut.setCacheExpirationInSeconds(11);
+    await sut.setCacheExpirationSeconds(11);
 
-    expect(sut.getCacheExpirationInSeconds()).toBe(11);
+    expect(sut.getCacheExpirationSeconds()).toBe(11);
   });
 
   it("PCU-01 - publishContentUpdate", async () => {
@@ -502,41 +457,34 @@ describe("Get Contents method call", () => {
 
     when(() =>
       mockApiClient.publishContentUpdate(
+        "123",
         It.isObject({
-          contentId: "123",
-          payload: {
-            description: "description",
-          },
+          content: {},
+          description: "description",
         })
       )
     ).thenResolve();
 
-    const sut = new Joystick({
-      properties: {
+    const sut = new Joystick(
+      {
         apiKey: "123",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
     await expect(() =>
-      sut.publishContentUpdate({
-        contentId: "  ",
-        payload: {
-          description: "description",
-          content: {
-            foo: "bar",
-          },
-        },
-      })
-    ).rejects.toThrow(InvalidArgumentError);
-
-    await sut.publishContentUpdate({
-      contentId: "123",
-      payload: {
+      sut.publishContentUpdate("  ", {
         description: "description",
         content: {
           foo: "bar",
         },
+      })
+    ).rejects.toThrow(InvalidArgumentError);
+
+    await sut.publishContentUpdate("123", {
+      description: "description",
+      content: {
+        foo: "bar",
       },
     });
   });
@@ -545,13 +493,7 @@ describe("Get Contents method call", () => {
     mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
-      mockApiClient.getDynamicContent(
-        It.isObject({
-          contentIds: It.isArray(["key1"]),
-          payload: It.isAny(),
-          responseType: "serialized",
-        })
-      )
+      mockApiClient.getDynamicContent(["key1"], It.isAny(), "serialized")
     ).thenResolve({
       key1: createSampleApiResponse(
         JSON.stringify({
@@ -560,31 +502,26 @@ describe("Get Contents method call", () => {
       ),
     });
 
-    const sut = new Joystick({
-      properties: {
+    const sut = new Joystick(
+      {
         apiKey: "123",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
     expect(
-      await sut.getContent({
-        contentId: "key1",
-        options: {
-          fullResponse: true,
-          serialized: true,
-        },
+      await sut.getContent("key1", {
+        fullResponse: true,
+        serialized: true,
       })
     ).toEqual({
-      key1: {
-        data: '{"id":"item.1"}',
-        hash: "hash",
-        meta: {
-          mod: 0,
-          seg: [],
-          uid: 0,
-          variants: [],
-        },
+      data: '{"id":"item.1"}',
+      hash: "hash",
+      meta: {
+        mod: 0,
+        seg: [],
+        uid: 0,
+        variants: [],
       },
     });
   });
@@ -593,13 +530,7 @@ describe("Get Contents method call", () => {
     mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
-      mockApiClient.getDynamicContent(
-        It.isObject({
-          contentIds: It.isArray(["key2"]),
-          payload: It.isAny(),
-          responseType: It.isAny(),
-        })
-      )
+      mockApiClient.getDynamicContent(["key2"], It.isAny(), It.isAny())
     )
       .thenResolve({
         key2: createSampleApiResponse({
@@ -608,72 +539,52 @@ describe("Get Contents method call", () => {
       })
       .once();
 
-    const sut = new Joystick({
-      properties: {
+    const sut = new Joystick(
+      {
         apiKey: "123",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
     expect(
-      await sut.getContent({
-        contentId: "key2",
-        options: {
-          fullResponse: false,
-        },
+      await sut.getContent("key2", {
+        fullResponse: false,
       })
     ).toEqual({
-      key2: {
-        id: "item.1",
-      },
+      id: "item.1",
     });
 
     //from cache
     expect(
-      await sut.getContent({
-        contentId: "key2",
-        options: {
-          fullResponse: false,
-        },
+      await sut.getContent("key2", {
+        fullResponse: false,
       })
     ).toEqual({
-      key2: {
-        id: "item.1",
-      },
+      id: "item.1",
     });
   });
 
   it("CCVD-03 - setParamValue", () => {
     let sut = new Joystick({
-      properties: {
-        apiKey: "123",
-      },
+      apiKey: "123",
     });
 
     expect(sut.getParamValue("key")).toBeUndefined();
 
     sut = new Joystick({
-      properties: {
-        apiKey: "123",
-        params: {
-          key: "value",
-        },
+      apiKey: "123",
+      params: {
+        key: "value",
       },
     });
-
-    const spyClearCache = jest.spyOn(sut, "clearCache");
 
     expect(sut.getParamValue("key")).toBe("value");
 
     sut.setParamValue("key", "another-value");
 
-    expect(spyClearCache).toHaveBeenCalled();
-
     expect(sut.getParamValue("key")).toBe("another-value");
 
     sut.setParamValue("key", null);
-
-    expect(spyClearCache).toHaveBeenCalledTimes(2);
 
     expect(sut.getParamValue("key")).toBe(null);
 
@@ -684,8 +595,6 @@ describe("Get Contents method call", () => {
       },
     });
 
-    expect(spyClearCache).toHaveBeenCalledTimes(3);
-
     expect(sut.getParamValue("key")).toBeUndefined();
 
     expect(sut.getParamValue("_m3")).toEqual({
@@ -693,62 +602,49 @@ describe("Get Contents method call", () => {
     });
 
     sut.setParamValue("key", { name: "Miguel" });
-
-    expect(spyClearCache).toHaveBeenCalledTimes(4);
   });
 
   it("call API", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
     when(() =>
-      mockApiClient.getDynamicContent(
-        It.isObject({
-          contentIds: ["first_config"],
-        })
-      )
+      mockApiClient.getDynamicContent(["first_config"], It.isObject({}))
     )
       .thenResolve({
         first_config: createSampleApiResponse({ name: "Miguel" }),
       })
       .anyTimes();
 
-    const sut = new Joystick({
-      properties: {
+    const sut = new Joystick(
+      {
         apiKey: "JOYSTICK_API_KEY",
         semVer: "1.0.0",
       },
-      apiClient: mockApiClient,
-    });
+      mockApiClient
+    );
 
-    const resultv1 = await sut.getContent({ contentId: "first_config" });
+    const resultv1 = await sut.getContent("first_config");
 
     expect(resultv1).toEqual({
-      first_config: {
-        name: "Miguel",
-      },
+      name: "Miguel",
     });
 
     sut.setSemVer("2.0.0");
 
-    const resultv2 = await sut.getContent({
-      contentId: "first_config",
-      options: {
-        fullResponse: true,
-      },
+    const resultv2 = await sut.getContent("first_config", {
+      fullResponse: true,
     });
 
     expect(resultv2).toEqual({
-      first_config: {
-        data: {
-          name: "Miguel",
-        },
-        hash: "hash",
-        meta: {
-          mod: 0,
-          seg: [],
-          uid: 0,
-          variants: [],
-        },
+      data: {
+        name: "Miguel",
+      },
+      hash: "hash",
+      meta: {
+        mod: 0,
+        seg: [],
+        uid: 0,
+        variants: [],
       },
     });
   });

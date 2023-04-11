@@ -20,32 +20,17 @@ describe("test InMemoryCache", () => {
   it("init", () => {
     const logger = new SdkLogger();
 
-    const sut = new InMemoryCache({
-      cacheExpirationInSeconds: 10,
-      logger,
-    });
+    const sut = new InMemoryCache(10, logger);
 
     expect(sut.getCacheSize()).toEqual(0);
   });
 
-  it("CCVD-05 - cacheExpirationInSeconds - constructor", () => {
-    expect(
-      () =>
-        new InMemoryCache({
-          cacheExpirationInSeconds: 0,
-          logger: mock<Logger>(),
-        })
-    ).not.toThrow();
+  it("CCVD-05 - cacheExpirationSeconds - constructor", () => {
+    expect(() => new InMemoryCache(0, mock<Logger>())).not.toThrow();
 
-    expect(
-      () =>
-        new InMemoryCache({
-          cacheExpirationInSeconds: -2,
-          logger: mock<Logger>(),
-        })
-    ).toThrow(
+    expect(() => new InMemoryCache(-2, mock<Logger>())).toThrow(
       new InvalidArgumentError(
-        "Invalid cacheExpirationInSeconds: <-2>. It should be equal or greater than 0"
+        "Invalid cacheExpirationSeconds: <-2>. It should be equal or greater than 0"
       )
     );
   });
@@ -56,11 +41,7 @@ describe("test InMemoryCache", () => {
     const logger = new SdkLogger();
     const nowFn = () => timelapse;
 
-    const cache = new InMemoryCache({
-      cacheExpirationInSeconds: 10,
-      logger,
-      nowFn,
-    });
+    const cache = new InMemoryCache(10, logger, undefined, nowFn);
 
     const value = {
       c1: createSampleApiResponse({
@@ -68,7 +49,7 @@ describe("test InMemoryCache", () => {
       }),
     };
 
-    cache.set("key", value);
+    await cache.set("key", value);
 
     expect(await cache.get("key")).toEqual(value);
 
@@ -77,18 +58,18 @@ describe("test InMemoryCache", () => {
     expect(await cache.get("key")).toBeUndefined();
   });
 
-  it("CCVD-05 - setCacheExpirationInSeconds", () => {
+  it("CCVD-05 - setCacheExpirationSeconds", () => {
     const logger = new SdkLogger();
 
-    const sut = new InMemoryCache({ cacheExpirationInSeconds: 10, logger });
+    const sut = new InMemoryCache(10, logger);
 
-    expect(() => sut.setCacheExpirationInSeconds(-1)).toThrow(
+    expect(async () => await sut.setCacheExpirationSeconds(-1)).rejects.toThrow(
       new InvalidArgumentError(
-        "Invalid cacheExpirationInSeconds: <-1>. It should be equal or greater than 0"
+        "Invalid cacheExpirationSeconds: <-1>. It should be equal or greater than 0"
       )
     );
 
-    expect(() => sut.setCacheExpirationInSeconds(1)).not.toThrow();
+    expect(async () => await sut.setCacheExpirationSeconds(1)).not.toThrow();
   });
 
   it("checkLruMaxSize", async () => {
@@ -97,12 +78,7 @@ describe("test InMemoryCache", () => {
 
     const logger = new SdkLogger();
 
-    const cache = new InMemoryCache({
-      cacheExpirationInSeconds: 10,
-      maxItemsInCache: 2,
-      logger,
-      nowFn,
-    });
+    const cache = new InMemoryCache(10, logger, 2, nowFn);
 
     const value = {
       c1: createSampleApiResponse({
@@ -110,21 +86,21 @@ describe("test InMemoryCache", () => {
       }),
     };
 
-    cache.set("key1", value);
+    await cache.set("key1", value);
 
     expect(cache.getCacheSize()).toBe(1);
 
     timelapse *= 2;
 
-    cache.set("key2", value);
+    await cache.set("key2", value);
 
     expect(cache.getCacheSize()).toBe(2);
 
-    cache.set("key2", value);
+    await cache.set("key2", value);
 
     expect(cache.getCacheSize()).toBe(2);
 
-    cache.set("key3", value);
+    await cache.set("key3", value);
 
     expect(cache.getCacheSize()).toBe(2);
 

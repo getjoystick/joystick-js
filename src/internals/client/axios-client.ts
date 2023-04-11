@@ -10,21 +10,12 @@ export class AxiosClient implements HttpClient {
   private readonly client: AxiosInstance;
   private readonly logger: Logger;
 
-  constructor({
-    apiKey,
-    timeoutInMs = 2_500,
-    logger,
-  }: {
-    apiKey: string;
-    timeoutInMs?: number;
-    logger: Logger;
-  }) {
+  constructor(apiKey: string, logger: Logger) {
     this.validateApiKey(apiKey);
 
     this.logger = logger;
 
     this.client = axios.create({
-      timeout: timeoutInMs,
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -42,24 +33,20 @@ export class AxiosClient implements HttpClient {
     }
   }
 
-  async put({
-    url,
-    payload,
-    params,
-  }: {
-    url: string;
-    payload: Record<string, unknown>;
-    params?: Record<string, unknown>;
-  }): Promise<void> {
+  async put(
+    url: string,
+    payload: Record<string, unknown>,
+    queryParams?: Record<string, unknown>
+  ): Promise<void> {
     this.logger.debug("Sending put request", {
       url,
       payload,
-      params,
+      params: queryParams,
     });
 
     try {
       await this.client.put(url, payload, {
-        params,
+        params: queryParams,
       });
     } catch (e) {
       this.checkForErrors(e);
@@ -68,24 +55,20 @@ export class AxiosClient implements HttpClient {
     }
   }
 
-  async post({
-    url,
-    payload,
-    params,
-  }: {
-    url: string;
-    payload: Record<string, unknown>;
-    params?: Record<string, unknown>;
-  }): Promise<Record<string, unknown>> {
+  async post(
+    url: string,
+    payload: Record<string, unknown>,
+    queryParams?: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     this.logger.debug("Sending post request", {
       url,
       payload,
-      params,
+      params: queryParams,
     });
 
     try {
       const { data } = await this.client.post(url, payload, {
-        params,
+        params: queryParams,
       });
 
       return data;

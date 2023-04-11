@@ -16,7 +16,7 @@ import { ApiBadRequestError } from "./errors/api-bad-request-error";
 import { InvalidArgumentError } from "./errors/invalid-argument-error";
 import { PublishContentUpdatePayload } from "./models/publish-content-update-payload";
 
-const DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 300;
+const DEFAULT_CACHE_EXPIRATION_SECONDS = 300;
 
 const SEM_VER_REG_EXP = /^\d+.\d+.\d+$/;
 
@@ -30,23 +30,18 @@ export class Joystick {
     return this.cache;
   }
 
-  constructor({
-    properties,
-    apiClient,
-    logger,
-    cache,
-  }: {
-    properties: Properties;
-    apiClient?: ApiClient;
-    logger?: Logger;
-    cache?: SdkCache;
-  }) {
+  constructor(
+    properties: Properties,
+    apiClient?: ApiClient,
+    logger?: Logger,
+    cache?: SdkCache
+  ) {
     const { semVer, userId, apiKey, options } = properties;
 
     this.validateApiKey(apiKey);
     this.validateUserId(userId);
     this.validateSemVer(semVer);
-    this.validateCacheExpirationInSeconds(options?.cacheExpirationInSeconds);
+    this.validateCacheExpirationSeconds(options?.cacheExpirationSeconds);
 
     this.properties = properties;
 
@@ -54,20 +49,13 @@ export class Joystick {
 
     this.apiClient =
       apiClient ??
-      new JoystickApiClient({
-        client: new AxiosClient({
-          apiKey: this.getApiKey(),
-          logger: this.logger,
-        }),
-        logger: this.logger,
-      });
+      new JoystickApiClient(
+        new AxiosClient(this.getApiKey(), this.logger),
+        this.logger
+      );
 
     this.cache =
-      cache ??
-      new InMemoryCache({
-        cacheExpirationInSeconds: this.getCacheExpirationInSeconds(),
-        logger: this.logger,
-      });
+      cache ?? new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
   }
 
   getParamValue(key: string): unknown {
@@ -79,8 +67,6 @@ export class Joystick {
       ...this.properties.params,
       [key]: value,
     };
-
-    this.clearCache();
   }
 
   getApiKey(): string {
@@ -99,35 +85,27 @@ export class Joystick {
     this.validateSemVer(semVer);
 
     this.properties.semVer = semVer;
-
-    this.clearCache();
   }
 
-  getParams(): Record<string, unknown> | undefined {
-    return this.properties.params;
+  getParams(): Record<string, unknown> {
+    return this.properties.params || {};
   }
 
-  getCacheExpirationInSeconds(): number {
+  getCacheExpirationSeconds(): number {
     return (
-      this.properties.options?.cacheExpirationInSeconds ||
-      DEFAULT_CACHE_EXPIRATION_IN_SECONDS
+      this.properties.options?.cacheExpirationSeconds ??
+      DEFAULT_CACHE_EXPIRATION_SECONDS
     );
   }
 
-  async publishContentUpdate({
-    contentId,
-    payload,
-  }: {
-    contentId: string;
-    payload: PublishContentUpdatePayload;
-  }): Promise<void> {
+  async publishContentUpdate(
+    contentId: string,
+    payload: PublishContentUpdatePayload
+  ): Promise<void> {
     this.validateContentId(contentId);
 
     try {
-      return await this.apiClient.publishContentUpdate({
-        contentId,
-        payload,
-      });
+      return await this.apiClient.publishContentUpdate(contentId, payload);
     } catch (e) {
       if (e instanceof ApiUnkownError) {
         this.logger.error(
@@ -154,27 +132,23 @@ export class Joystick {
    * @Note For shared caches, it is cache's implementor responsability to maintain track of keys to be deleted by the method.
    *
    */
-  clearCache(): void {
-    this.cache.clear();
+  async clearCache(): Promise<void> {
+    await this.cache.clear();
   }
 
-  async getContent({
-    contentId,
-    options,
-  }: {
-    contentId: string;
-    options?: ContentOptions;
-  }): Promise<Record<string, ApiResponse | undefined>> {
-    return this.getContents({ contentIds: [contentId], options });
+  async getContent(
+    contentId: string,
+    options?: ContentOptions
+  ): Promise<ApiResponse | undefined> {
+    const result = await this.getContents([contentId], options);
+
+    return result[contentId];
   }
 
-  async getContents({
-    contentIds,
-    options,
-  }: {
-    contentIds: string[];
-    options?: ContentOptions;
-  }): Promise<Record<string, ApiResponse | undefined>> {
+  async getContents(
+    contentIds: string[],
+    options?: ContentOptions
+  ): Promise<Record<string, ApiResponse | undefined>> {
     this.validateContentIds(contentIds);
 
     const cacheKey = await this.buildCacheKey(contentIds, options);
@@ -183,17 +157,17 @@ export class Joystick {
 
     if (!content) {
       try {
-        content = await this.apiClient.getDynamicContent({
+        content = await this.apiClient.getDynamicContent(
           contentIds,
-          payload: {
+          {
             params: this.getParams(),
             semVer: this.getSemVer(),
             userId: this.getUserId(),
           },
-          responseType: options?.serialized ? "serialized" : undefined,
-        });
+          this.getSerialized(options?.serialized) ? "serialized" : undefined
+        );
 
-        this.cache.set(cacheKey, content);
+        await this.cache.set(cacheKey, content);
       } catch (e) {
         if (e instanceof ApiUnkownError) {
           this.logger.error(
@@ -244,7 +218,7 @@ export class Joystick {
       this.getSemVer(),
       this.getUserId(),
       [...contentIds].sort(),
-      options?.serialized ?? this.properties.options?.serialized,
+      this.getSerialized(options?.serialized),
       options?.fullResponse ?? false,
     ];
 
@@ -259,29 +233,34 @@ export class Joystick {
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
   }
 
-  setUserId(userId: string | undefined) {
+  setUserId(userId: string | undefined): void {
     this.validateUserId(userId);
 
     this.properties.userId = userId;
-
-    this.clearCache();
   }
 
-  setCacheExpirationInSeconds(cacheExpirationInSeconds: number) {
-    this.validateCacheExpirationInSeconds(cacheExpirationInSeconds);
+  setSerialized(serialized: boolean): void {
+    this.properties.options = {
+      ...this.properties.options,
+      serialized,
+    };
+  }
+
+  async setCacheExpirationSeconds(
+    cacheExpirationSeconds: number
+  ): Promise<void> {
+    this.validateCacheExpirationSeconds(cacheExpirationSeconds);
 
     this.properties.options = {
       ...this.properties.options,
-      cacheExpirationInSeconds,
+      cacheExpirationSeconds,
     };
 
-    this.cache.setCacheExpirationInSeconds(cacheExpirationInSeconds);
+    await this.cache.setCacheExpirationSeconds(cacheExpirationSeconds);
   }
 
-  setParams(params: Record<string, unknown> | undefined) {
+  setParams(params: Record<string, unknown>): void {
     this.properties.params = params;
-
-    this.clearCache();
   }
 
   private validateContentIds(contentIds: string[]) {
@@ -302,12 +281,12 @@ export class Joystick {
     }
   }
 
-  private validateCacheExpirationInSeconds(
-    cacheExpirationInSeconds: number | undefined
+  private validateCacheExpirationSeconds(
+    cacheExpirationSeconds: number | undefined
   ) {
-    if (cacheExpirationInSeconds != undefined && cacheExpirationInSeconds < 0) {
+    if (cacheExpirationSeconds != undefined && cacheExpirationSeconds < 0) {
       throw new InvalidArgumentError(
-        `Invalid cacheExpirationInSeconds: <${cacheExpirationInSeconds}>`
+        `Invalid cacheExpirationSeconds: <${cacheExpirationSeconds}>`
       );
     }
   }
@@ -328,5 +307,9 @@ export class Joystick {
     if (!contentId || !contentId.trim()) {
       throw new InvalidArgumentError(`Invalid contentId: <${contentId}>`);
     }
+  }
+
+  getSerialized(serialized?: boolean): boolean | undefined {
+    return serialized ?? this.properties.options?.serialized;
   }
 }

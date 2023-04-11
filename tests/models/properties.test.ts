@@ -15,7 +15,7 @@ describe("test Properties", () => {
       params: {},
       semVer: "semver",
       options: {
-        cacheExpirationInSeconds: 123,
+        cacheExpirationSeconds: 123,
         serialized: true,
       },
       userId: "",
@@ -26,7 +26,7 @@ describe("test Properties", () => {
       params: {},
       semVer: "semver",
       options: {
-        cacheExpirationInSeconds: 123,
+        cacheExpirationSeconds: 123,
         serialized: true,
       },
       userId: "",

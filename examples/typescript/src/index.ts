@@ -4,7 +4,8 @@ import { RedisCache } from "./redis-cache";
 
 dotenv.config();
 
-const redisCache = new RedisCache(2);
+const cache = new RedisCache(2);
+//const cache = new NodeCacheImpl(2);
 
 const joystick = new Joystick(
   {
@@ -13,10 +14,9 @@ const joystick = new Joystick(
       cacheExpirationSeconds: 2,
     },
   },
-  undefined,
-  undefined,
-  // new NodeCacheImpl(2)
-  redisCache
+  {
+    cache,
+  }
 );
 (async function () {
   let data = await joystick.getContent("first_config", {
@@ -45,5 +45,5 @@ const joystick = new Joystick(
 
   console.log("from API again because refresh is true", data);
 
-  await redisCache.disconnect();
+  await cache.disconnect();
 })();

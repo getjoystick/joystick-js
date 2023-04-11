@@ -1,5 +1,5 @@
-import { SdkCache } from "../../../../src/internals/cache/sdk-cache";
 import NodeCache from "node-cache";
+import { SdkCache } from "../../../../src/internals/cache/sdk-cache";
 import { ApiResponse } from "../../../../src/models/api-response";
 
 export class NodeCacheImpl implements SdkCache {
@@ -35,7 +35,9 @@ export class NodeCacheImpl implements SdkCache {
     return Promise.resolve(this.cache.get(key));
   }
 
-  setCacheExpirationSeconds(cacheExpirationSeconds: number): void {
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
     this.cache.options.stdTTL = cacheExpirationSeconds;
+
+    return Promise.resolve();
   }
 }

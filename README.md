@@ -1,4 +1,4 @@
-# Joystick Vanilla JS SDK
+# Joystick JS SDK
 
 ## Introduction
 
@@ -6,6 +6,6 @@
 
 ## Requirements
 
-- NodeJS 10
+- NodeJS 16
 
 ## How to use

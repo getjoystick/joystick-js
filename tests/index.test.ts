@@ -54,7 +54,9 @@ describe("Construction of the client", () => {
       {
         apiKey: "123",
       },
-      mockApiClient
+      {
+        apiClient: mockApiClient,
+      }
     );
 
     expect(sut1.getApiKey()).toBe("123");
@@ -81,7 +83,9 @@ describe("Construction of the client", () => {
         apiKey: "231",
         userId: "USER-ID-UNKNOWN",
       },
-      mockApiClient
+      {
+        apiClient: mockApiClient,
+      }
     );
 
     expect(sut2.getApiKey()).toBe("231");
@@ -343,7 +347,7 @@ describe("Validation of Client configuration", () => {
 
     expect(sut.getCacheExpirationSeconds()).toBe(10);
 
-    expect(
+    await expect(
       async () => await sut.setCacheExpirationSeconds(-20)
     ).rejects.toThrowError("Invalid cacheExpirationSeconds");
 
@@ -383,9 +387,9 @@ describe("Caching Logic", () => {
       {
         apiKey: "123",
       },
-      undefined,
-      undefined,
-      cache
+      {
+        cache,
+      }
     );
 
     expect(sut.getCache()).toBeInstanceOf(MyCache);
@@ -443,9 +447,9 @@ describe("Get Contents method call", () => {
 
     expect(sut.getCacheExpirationSeconds()).toBe(9998);
 
-    expect(async () => await sut.setCacheExpirationSeconds(-1)).rejects.toThrow(
-      "Invalid cacheExpirationSeconds: <-1>"
-    );
+    await expect(
+      async () => await sut.setCacheExpirationSeconds(-1)
+    ).rejects.toThrow("Invalid cacheExpirationSeconds: <-1>");
 
     await sut.setCacheExpirationSeconds(11);
 
@@ -469,7 +473,9 @@ describe("Get Contents method call", () => {
       {
         apiKey: "123",
       },
-      mockApiClient
+      {
+        apiClient: mockApiClient,
+      }
     );
 
     await expect(() =>
@@ -506,7 +512,7 @@ describe("Get Contents method call", () => {
       {
         apiKey: "123",
       },
-      mockApiClient
+      { apiClient: mockApiClient }
     );
 
     expect(
@@ -543,7 +549,9 @@ describe("Get Contents method call", () => {
       {
         apiKey: "123",
       },
-      mockApiClient
+      {
+        apiClient: mockApiClient,
+      }
     );
 
     expect(
@@ -620,7 +628,9 @@ describe("Get Contents method call", () => {
         apiKey: "JOYSTICK_API_KEY",
         semVer: "1.0.0",
       },
-      mockApiClient
+      {
+        apiClient: mockApiClient,
+      }
     );
 
     const resultv1 = await sut.getContent("first_config");

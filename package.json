@@ -1,6 +1,6 @@
 {
   "name": "@getjoystick/joystick-js",
-  "version": "0.0.1-3",
+  "version": "0.0.1-alpha.1",
   "description": "JS SDK for Joystick",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -9,12 +9,9 @@
     "dist"
   ],
   "scripts": {
-    "lint": "tsc",
     "build": "tsup --format=esm,cjs --minify --treeshake",
     "pretest": "npm run build",
-    "test": "jest",
-    "prerelease": "npm test",
-    "release": "npm version prerelease"
+    "test": "jest"
   },
   "author": "getjoystick",
   "license": "MIT",
@@ -27,6 +24,7 @@
     "strong-mock": "^8.0.1",
     "ts-jest": "^29.0.5",
     "tsup": "^6.6.3",
+    "typedoc": "^0.24.1",
     "typescript": "^4.9.5"
   },
   "jest": {

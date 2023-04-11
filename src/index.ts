@@ -15,6 +15,7 @@ import { ApiServerError } from "./errors/api-server-error";
 import { ApiBadRequestError } from "./errors/api-bad-request-error";
 import { InvalidArgumentError } from "./errors/invalid-argument-error";
 import { PublishContentUpdatePayload } from "./models/publish-content-update-payload";
+import { Services } from "./models/services";
 
 const DEFAULT_CACHE_EXPIRATION_SECONDS = 300;
 
@@ -26,16 +27,18 @@ export class Joystick {
   private readonly cache: SdkCache;
   private readonly logger: Logger;
 
-  public getCache(): SdkCache {
-    return this.cache;
-  }
-
-  constructor(
-    properties: Properties,
-    apiClient?: ApiClient,
-    logger?: Logger,
-    cache?: SdkCache
-  ) {
+  /**
+   *  Initializes the Joystick SDK
+   *
+   *  @param properties
+   *    initial values to consume the API
+   *  @param services
+   *    custom implementation of API client
+   *    custom implementtion of Logger
+   *    custom implementation of cache.
+   *
+   */
+  constructor(properties: Properties, services?: Services) {
     const { semVer, userId, apiKey, options } = properties;
 
     this.validateApiKey(apiKey);
@@ -45,17 +48,22 @@ export class Joystick {
 
     this.properties = properties;
 
-    this.logger = logger ?? new SdkLogger();
+    this.logger = services?.logger ?? new SdkLogger();
 
     this.apiClient =
-      apiClient ??
+      services?.apiClient ??
       new JoystickApiClient(
         new AxiosClient(this.getApiKey(), this.logger),
         this.logger
       );
 
     this.cache =
-      cache ?? new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
+      services?.cache ??
+      new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
+  }
+
+  public getCache(): SdkCache {
+    return this.cache;
   }
 
   getParamValue(key: string): unknown {
@@ -81,7 +89,7 @@ export class Joystick {
     return this.properties.semVer;
   }
 
-  setSemVer(semVer: string | undefined) {
+  setSemVer(semVer: string | undefined): void {
     this.validateSemVer(semVer);
 
     this.properties.semVer = semVer;
@@ -198,6 +206,40 @@ export class Joystick {
     return this.simplifyResponse(content);
   }
 
+  setUserId(userId: string | undefined): void {
+    this.validateUserId(userId);
+
+    this.properties.userId = userId;
+  }
+
+  setSerialized(serialized: boolean): void {
+    this.properties.options = {
+      ...this.properties.options,
+      serialized,
+    };
+  }
+
+  async setCacheExpirationSeconds(
+    cacheExpirationSeconds: number
+  ): Promise<void> {
+    this.validateCacheExpirationSeconds(cacheExpirationSeconds);
+
+    this.properties.options = {
+      ...this.properties.options,
+      cacheExpirationSeconds,
+    };
+
+    await this.cache.setCacheExpirationSeconds(cacheExpirationSeconds);
+  }
+
+  setParams(params: Record<string, unknown>): void {
+    this.properties.params = params;
+  }
+
+  getSerialized(serialized?: boolean): boolean | undefined {
+    return serialized ?? this.properties.options?.serialized;
+  }
+
   private simplifyResponse(freshContent: Record<string, ApiResponse>) {
     return Object.entries(freshContent).reduce(
       (acc, [key, value]) => ({
@@ -231,36 +273,6 @@ export class Joystick {
     return Object.entries(params)
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-  }
-
-  setUserId(userId: string | undefined): void {
-    this.validateUserId(userId);
-
-    this.properties.userId = userId;
-  }
-
-  setSerialized(serialized: boolean): void {
-    this.properties.options = {
-      ...this.properties.options,
-      serialized,
-    };
-  }
-
-  async setCacheExpirationSeconds(
-    cacheExpirationSeconds: number
-  ): Promise<void> {
-    this.validateCacheExpirationSeconds(cacheExpirationSeconds);
-
-    this.properties.options = {
-      ...this.properties.options,
-      cacheExpirationSeconds,
-    };
-
-    await this.cache.setCacheExpirationSeconds(cacheExpirationSeconds);
-  }
-
-  setParams(params: Record<string, unknown>): void {
-    this.properties.params = params;
   }
 
   private validateContentIds(contentIds: string[]) {
@@ -307,9 +319,5 @@ export class Joystick {
     if (!contentId || !contentId.trim()) {
       throw new InvalidArgumentError(`Invalid contentId: <${contentId}>`);
     }
-  }
-
-  getSerialized(serialized?: boolean): boolean | undefined {
-    return serialized ?? this.properties.options?.serialized;
   }
 }

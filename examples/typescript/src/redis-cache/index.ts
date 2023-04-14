@@ -51,10 +51,8 @@ export class RedisCache implements SdkCache {
     );
   }
 
-  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): void {
     this._cacheExpirationSeconds = cacheExpirationSeconds;
-
-    return Promise.resolve();
   }
 
   async disconnect() {

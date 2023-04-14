@@ -15,7 +15,7 @@
     "@types/redis": "^4.0.11"
   },
   "dependencies": {
-    "@getjoystick/joystick-js": "^0.0.1-alpha.1",
+    "@getjoystick/joystick-js": "^0.0.1-alpha.4",
     "dotenv": "^16.0.3",
     "node-cache": "^5.1.2",
     "redis": "^4.6.5"

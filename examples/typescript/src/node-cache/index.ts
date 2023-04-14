@@ -35,9 +35,7 @@ export class NodeCacheImpl implements SdkCache {
     return Promise.resolve(this.cache.get(key));
   }
 
-  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): void {
     this.cache.options.stdTTL = cacheExpirationSeconds;
-
-    return Promise.resolve();
   }
 }

@@ -1,5 +1,9 @@
 import { Logger } from "./logger";
 
+/**
+ * Logger implementation using console object
+ *
+ */
 export class SdkLogger implements Logger {
   debug(...data: unknown[]): void {
     this.shouldLog("debug") && console.debug(...data);

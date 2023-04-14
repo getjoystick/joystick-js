@@ -28,14 +28,23 @@ export class Joystick {
   private readonly logger: Logger;
 
   /**
-   *  Initializes the Joystick SDK
+   * Initializes the Joystick SDK with default values.
    *
-   *  @param properties
-   *    initial values to consume the API
-   *  @param services
-   *    custom implementation of API client
-   *    custom implementtion of Logger
-   *    custom implementation of cache.
+   *
+   * @param {Object} properties Default values for the SDK
+   *  @param {string} properties.apiKey API Key provided by the Joystick platform
+   *  @param {string} [properties.userId] UserId value for API request payload u field
+   *  @param {string} [properties.semVer] Version of the content to return
+   *  @param {string} [properties.params] Params object to send with the requests
+   *  @param {object} [properties.options] Options
+   *    @param {number} [properties.options.cacheExpirationSeconds] Number of seconds while the cache is valid
+   *    @param {boolean} [properties.options.serialized] The returned data should come in string format (true)
+   * @param {object} [services] Provides custom implementations for services
+   *  @param {ApiClient} [services.apiClient] Custom implementation for the API client
+   *  @param {Logger} [services.logger] Custom implementation for logging
+   *  @param {SdkCache} [services.cache] Custom implementation for caching
+   *
+   * @return An instance of the class
    *
    */
   constructor(properties: Properties, services?: Services) {
@@ -62,7 +71,7 @@ export class Joystick {
       new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
   }
 
-  public getCache(): SdkCache {
+  getCache(): SdkCache {
     return this.cache;
   }
 
@@ -70,11 +79,13 @@ export class Joystick {
     return this.properties.params?.[key];
   }
 
-  setParamValue(key: string, value: unknown): void {
+  setParamValue(key: string, value: unknown): Joystick {
     this.properties.params = {
       ...this.properties.params,
       [key]: value,
     };
+
+    return this;
   }
 
   getApiKey(): string {
@@ -89,16 +100,41 @@ export class Joystick {
     return this.properties.semVer;
   }
 
-  setSemVer(semVer: string | undefined): void {
+  /**
+   * Sets the version of the config to get from Joystick.
+   *
+   * @param semVer
+   *   expected undefined or a string following the semVer convention of three groups of numbers split by dots, excluding all the fancy prefixes
+   *
+   * @return this, allowing fluent setters
+   *
+   */
+  setSemVer(semVer: string | undefined): Joystick {
     this.validateSemVer(semVer);
 
     this.properties.semVer = semVer;
+
+    return this;
   }
 
+  /**
+   * Returns the params property of the properties object.
+   *
+   *
+   * @return object or empty object if it is null
+   *
+   */
   getParams(): Record<string, unknown> {
-    return this.properties.params || {};
+    return this.properties.params ?? {};
   }
 
+  /**
+   * Get the number of seconds the cache data is valid.
+   *
+   * If no initial value was specified, it defaults to 300 seconds
+   * Can be set on constructor or using @see setCacheExpirationSeconds
+   *
+   */
   getCacheExpirationSeconds(): number {
     return (
       this.properties.options?.cacheExpirationSeconds ??
@@ -106,6 +142,17 @@ export class Joystick {
     );
   }
 
+  /**
+   * Publish a content update to Joystick.
+   *
+   *
+   * @param {string} contentId Identify the content that is being published
+   * @param {PublishContentUpdatePayload} payload Pass the data to be published
+   *  @param {string} payload.description Description of the new content
+   *  @param {Record<string, unknown> | unknown[] | string | boolean | number} payload.content Content object, or an array, or a string, a boolean, or a number
+   *  @param {Record<string, unknown>[]} [payload.dynamicContentMap] Array of objects to use as dynamic content
+   *
+   */
   async publishContentUpdate(
     contentId: string,
     payload: PublishContentUpdatePayload
@@ -144,19 +191,45 @@ export class Joystick {
     await this.cache.clear();
   }
 
-  async getContent(
+  /**
+   * Returns the content of a single content ID from Joystick API.
+   *
+   *
+   * @param {string} contentId Identify the content that is being requested
+   * @param {ContentOptions} [options] Pass in an optional contentoptions object
+   *  @param {boolean} [options.refresh] The cache should be avoided, and the data must be requested from the API
+   *  @param {boolean} [options.serialized] Should return string representation of the data, rather than JSON one
+   *  @param {boolean} [options.fullResponse] Should include all the metadata in the response
+   *
+   * @return {TResult}, a generic type. Defaults to ApiResponse if not provided.
+   *
+   */
+  async getContent<TResult = ApiResponse>(
     contentId: string,
     options?: ContentOptions
-  ): Promise<ApiResponse | undefined> {
+  ): Promise<TResult> {
     const result = await this.getContents([contentId], options);
 
-    return result[contentId];
+    return result[contentId] as TResult;
   }
 
-  async getContents(
+  /**
+   * Returns the contents from Joystick API DynamicContent.
+   *
+   *
+   * @param {string[]} contentIds Pass in an array of content ids
+   * @param {ContentOptions} [options] Pass in an optional contentoptions object
+   *  @param {boolean} [options.refresh] The cache should be avoided, and the data must be requested from the API
+   *  @param {boolean} [options.serialized] Should return string representation of the data, rather than JSON one
+   *  @param {boolean} [options.fullResponse] Should include all the metadata in the response
+   *
+   * @return {Record<string,TResult>} TResult, a generic type. Defaults to ApiResponse if not provided.
+   *
+   */
+  async getContents<TResult = ApiResponse>(
     contentIds: string[],
     options?: ContentOptions
-  ): Promise<Record<string, ApiResponse | undefined>> {
+  ): Promise<Record<string, TResult>> {
     this.validateContentIds(contentIds);
 
     const cacheKey = await this.buildCacheKey(contentIds, options);
@@ -200,28 +273,39 @@ export class Joystick {
     }
 
     if (options?.fullResponse) {
-      return content;
+      return content as Record<string, TResult>;
     }
 
     return this.simplifyResponse(content);
   }
 
-  setUserId(userId: string | undefined): void {
+  setUserId(userId: string | undefined): Joystick {
     this.validateUserId(userId);
 
     this.properties.userId = userId;
+
+    return this;
   }
 
-  setSerialized(serialized: boolean): void {
+  setSerialized(serialized: boolean): Joystick {
     this.properties.options = {
       ...this.properties.options,
       serialized,
     };
+
+    return this;
   }
 
-  async setCacheExpirationSeconds(
-    cacheExpirationSeconds: number
-  ): Promise<void> {
+  /**
+   * Sets the cache expiration time in seconds locally and updates the cache implementation.
+   *
+   *
+   * @param {number} cacheExpirationSeconds Expects a value>=0, indicating the number of seconds the cache remains active
+   *
+   * @return this, allowing fluent setters
+   *
+   */
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): Joystick {
     this.validateCacheExpirationSeconds(cacheExpirationSeconds);
 
     this.properties.options = {
@@ -229,13 +313,26 @@ export class Joystick {
       cacheExpirationSeconds,
     };
 
-    await this.cache.setCacheExpirationSeconds(cacheExpirationSeconds);
+    this.cache.setCacheExpirationSeconds(cacheExpirationSeconds);
+
+    return this;
   }
 
-  setParams(params: Record<string, unknown>): void {
+  setParams(params: Record<string, unknown>): Joystick {
     this.properties.params = params;
+
+    return this;
   }
 
+  /**
+   * Returns the serialized property value.
+   *
+   *
+   * @param {boolean} [serialized] If provided, it will be used. If not, the global serialized will be returned.
+   *
+   * @return A boolean or undefined
+   *
+   */
   getSerialized(serialized?: boolean): boolean | undefined {
     return serialized ?? this.properties.options?.serialized;
   }

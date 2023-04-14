@@ -7,5 +7,8 @@ export interface Logger {
 
   debug(...data: unknown[]): void;
 
+  /**
+   * Indicates if the log should proceed based on the level type.
+   */
   shouldLog(level: "info" | "error" | "warn" | "debug"): boolean;
 }

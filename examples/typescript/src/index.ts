@@ -39,11 +39,11 @@ const joystick = new Joystick(
 
   console.log("from API again", data);
 
-  data = await joystick.getContent("first_config", {
+  const data2 = await joystick.getContent<{ name: string }>("first_config", {
     refresh: true,
   });
 
-  console.log("from API again because refresh is true", data);
+  console.log("from API again because refresh is true", data2);
 
   await cache.disconnect();
 })();

@@ -19,6 +19,16 @@ export class InMemoryCache implements SdkCache {
   private readonly maxItemsInCache: number;
   private readonly nowFn: () => number;
 
+  /**
+   * Initializes the InMemory cache.
+   *
+   *
+   * @param {number} cacheExpirationSeconds Number of seconds while the cache item is valid.
+   * @param {Logger} logger Logger implementation
+   * @param {number} [maxItemsInCache = 1_000] Max number of items on cache, following the LRU algorithm
+   * @param {() => number} [nowFn = Date.now] Time implementation to get now
+   *
+   */
   constructor(
     cacheExpirationSeconds: number,
     logger: Logger,
@@ -36,12 +46,10 @@ export class InMemoryCache implements SdkCache {
     this.cache = new Map<string, CacheValue>();
   }
 
-  setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
+  setCacheExpirationSeconds(cacheExpirationSeconds: number): void {
     this.validateCacheExpirationSeconds(cacheExpirationSeconds);
 
     this.cacheExpirationMs = cacheExpirationSeconds * 1_000;
-
-    return Promise.resolve();
   }
 
   getCacheSize(): number {

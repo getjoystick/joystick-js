@@ -11,6 +11,16 @@ export class JoystickApiClient implements ApiClient {
   private readonly client: HttpClient;
   private readonly logger: Logger;
 
+  /**
+   * Initializes the API client
+   *
+   *
+   * @param {HttpClient} client HttpClient implementation
+   * @param {Logger} logger Logger implementation
+   *
+   * @return The class instance
+   *
+   */
   constructor(client: HttpClient, logger: Logger) {
     this.client = client;
     this.logger = logger;

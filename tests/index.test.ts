@@ -347,11 +347,11 @@ describe("Validation of Client configuration", () => {
 
     expect(sut.getCacheExpirationSeconds()).toBe(10);
 
-    await expect(
-      async () => await sut.setCacheExpirationSeconds(-20)
-    ).rejects.toThrowError("Invalid cacheExpirationSeconds");
+    expect(() => sut.setCacheExpirationSeconds(-20)).toThrowError(
+      "Invalid cacheExpirationSeconds"
+    );
 
-    await sut.setCacheExpirationSeconds(11);
+    sut.setCacheExpirationSeconds(11);
 
     expect(sut.getCacheExpirationSeconds()).toBe(11);
   });
@@ -376,9 +376,7 @@ describe("Caching Logic", () => {
         return Promise.resolve();
       }
 
-      setCacheExpirationSeconds(cacheExpirationSeconds: number): Promise<void> {
-        return Promise.resolve();
-      }
+      setCacheExpirationSeconds(cacheExpirationSeconds: number): void {}
     }
 
     const cache = new MyCache();
@@ -447,11 +445,11 @@ describe("Get Contents method call", () => {
 
     expect(sut.getCacheExpirationSeconds()).toBe(9998);
 
-    await expect(
-      async () => await sut.setCacheExpirationSeconds(-1)
-    ).rejects.toThrow("Invalid cacheExpirationSeconds: <-1>");
+    expect(() => sut.setCacheExpirationSeconds(-1)).toThrow(
+      "Invalid cacheExpirationSeconds: <-1>"
+    );
 
-    await sut.setCacheExpirationSeconds(11);
+    sut.setCacheExpirationSeconds(11);
 
     expect(sut.getCacheExpirationSeconds()).toBe(11);
   });
@@ -564,7 +562,7 @@ describe("Get Contents method call", () => {
 
     //from cache
     expect(
-      await sut.getContent("key2", {
+      await sut.getContent<{ id: string }>("key2", {
         fullResponse: false,
       })
     ).toEqual({
@@ -633,7 +631,7 @@ describe("Get Contents method call", () => {
       }
     );
 
-    const resultv1 = await sut.getContent("first_config");
+    const resultv1 = await sut.getContent<{ name: string }>("first_config");
 
     expect(resultv1).toEqual({
       name: "Miguel",

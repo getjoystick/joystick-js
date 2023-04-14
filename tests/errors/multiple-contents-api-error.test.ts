@@ -11,7 +11,7 @@ describe("test MultipleContentsApiError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new MultipleContentsApiError();
+    const sut = new MultipleContentsApiError("");
 
     expect(sut).toBeInstanceOf(ApiError);
   });

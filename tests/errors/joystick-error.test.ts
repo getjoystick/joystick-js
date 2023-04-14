@@ -10,7 +10,7 @@ describe("test JoystickError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new JoystickError();
+    const sut = new JoystickError("");
 
     expect(sut).toBeInstanceOf(Error);
   });

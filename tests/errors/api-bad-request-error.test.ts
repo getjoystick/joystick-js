@@ -11,7 +11,7 @@ describe("test ApiBadRequestError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new ApiBadRequestError();
+    const sut = new ApiBadRequestError("");
 
     expect(sut).toBeInstanceOf(ApiHttpError);
   });

@@ -11,7 +11,7 @@ describe("test InvalidArgumentError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new InvalidArgumentError();
+    const sut = new InvalidArgumentError("");
 
     expect(sut).toBeInstanceOf(JoystickError);
   });

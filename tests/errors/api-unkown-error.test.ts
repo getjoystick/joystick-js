@@ -11,7 +11,7 @@ describe("test ApiUnkownError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new ApiUnkownError();
+    const sut = new ApiUnkownError("");
 
     expect(sut).toBeInstanceOf(ApiHttpError);
   });

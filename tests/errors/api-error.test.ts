@@ -11,7 +11,7 @@ describe("test ApiError", () => {
   });
 
   it("GCS-09 - parent", () => {
-    const sut = new ApiError();
+    const sut = new ApiError("");
 
     expect(sut).toBeInstanceOf(JoystickError);
   });

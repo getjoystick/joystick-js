@@ -61,10 +61,14 @@ export class Joystick {
 
     this.apiClient =
       services?.apiClient ??
-      new JoystickApiClient(new AxiosClient(this.getApiKey(), this.logger), this.logger);
+      new JoystickApiClient(
+        new AxiosClient(this.getApiKey(), this.logger),
+        this.logger
+      );
 
     this.cache =
-      services?.cache ?? new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
+      services?.cache ??
+      new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
   }
 
   getCache(): SdkCache {
@@ -132,7 +136,10 @@ export class Joystick {
    *
    */
   getCacheExpirationSeconds(): number {
-    return this.properties.options?.cacheExpirationSeconds ?? DEFAULT_CACHE_EXPIRATION_SECONDS;
+    return (
+      this.properties.options?.cacheExpirationSeconds ??
+      DEFAULT_CACHE_EXPIRATION_SECONDS
+    );
   }
 
   /**
@@ -156,11 +163,17 @@ export class Joystick {
       return await this.apiClient.publishContentUpdate(contentId, payload);
     } catch (e) {
       if (e instanceof ApiUnkownError) {
-        this.logger.error("Found an unknown error when publishing content update to Joystick");
+        this.logger.error(
+          "Found an unknown error when publishing content update to Joystick"
+        );
       } else if (e instanceof ApiServerError) {
-        this.logger.error("Found a server error when publishing content update to Joystick");
+        this.logger.error(
+          "Found a server error when publishing content update to Joystick"
+        );
       } else if (e instanceof ApiBadRequestError) {
-        this.logger.error("Found a client error when publishing content update to Joystick");
+        this.logger.error(
+          "Found a client error when publishing content update to Joystick"
+        );
       }
 
       throw e;
@@ -273,15 +286,21 @@ export class Joystick {
         await this.cache.set(cacheKey, content);
       } catch (e) {
         if (e instanceof ApiUnkownError) {
-          this.logger.error("Found an unknown error when getting content from Joystick");
+          this.logger.error(
+            "Found an unknown error when getting content from Joystick"
+          );
         } else if (e instanceof MultipleContentsApiError) {
           this.logger.error(
             `The following errors found when calling Multiple Content API:\n${e.message}`
           );
         } else if (e instanceof ApiServerError) {
-          this.logger.error("Found a server error when getting content from Joystick");
+          this.logger.error(
+            "Found a server error when getting content from Joystick"
+          );
         } else if (e instanceof ApiBadRequestError) {
-          this.logger.error("Found a client error when getting content from Joystick");
+          this.logger.error(
+            "Found a client error when getting content from Joystick"
+          );
         }
 
         throw e;
@@ -380,7 +399,9 @@ export class Joystick {
     return await sha256ToHex(parts);
   }
 
-  private getParamsSortedByKeyAsc(params: Record<string, unknown> = {}): Record<string, unknown> {
+  private getParamsSortedByKeyAsc(
+    params: Record<string, unknown> = {}
+  ): Record<string, unknown> {
     return Object.entries(params)
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
@@ -404,7 +425,9 @@ export class Joystick {
     }
   }
 
-  private validateCacheExpirationSeconds(cacheExpirationSeconds: number | undefined) {
+  private validateCacheExpirationSeconds(
+    cacheExpirationSeconds: number | undefined
+  ) {
     if (cacheExpirationSeconds != undefined && cacheExpirationSeconds < 0) {
       throw new InvalidArgumentError(
         `Invalid cacheExpirationSeconds: <${cacheExpirationSeconds}>`

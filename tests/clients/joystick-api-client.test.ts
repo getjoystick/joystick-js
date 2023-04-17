@@ -24,12 +24,12 @@ describe("test JoystickApiClient", () => {
           p: {},
         }),
         It.isObject({
-          c: '["123456789012345678901234567"]',
+          c: '["a123456789012345678901234567"]',
           dynamic: "true",
         })
       )
     ).thenResolve({
-      123456789012345678901234567: {
+      a123456789012345678901234567: {
         data: {
           content: {
             id: "1234567890",
@@ -49,11 +49,11 @@ describe("test JoystickApiClient", () => {
     const sut = new JoystickApiClient(mockClient, logger);
 
     expect(
-      await sut.getDynamicContent(["123456789012345678901234567"], {
+      await sut.getDynamicContent(["a123456789012345678901234567"], {
         params: {},
       })
     ).toEqual({
-      123456789012345678901234567: {
+      a123456789012345678901234567: {
         data: {
           content: {
             id: "1234567890",
@@ -80,13 +80,13 @@ describe("test JoystickApiClient", () => {
           p: {},
         }),
         It.isObject({
-          c: '["123456789012345678901234567","223456789012345678901234568"]',
+          c: '["a123456789012345678901234567","a223456789012345678901234568"]',
           dynamic: "true",
         })
       )
     ).thenResolve({
-      123456789012345678901234567: "Error 401 - Something went wrong",
-      223456789012345678901234568: {
+      a123456789012345678901234567: "Error 401 - Something went wrong",
+      a223456789012345678901234568: {
         data: {
           content: {
             id: "1234567890",
@@ -107,7 +107,7 @@ describe("test JoystickApiClient", () => {
 
     await expect(() =>
       sut.getDynamicContent(
-        ["123456789012345678901234567", "223456789012345678901234568"],
+        ["a123456789012345678901234567", "a223456789012345678901234568"],
         {
           params: {},
         }
@@ -128,13 +128,13 @@ describe("test JoystickApiClient", () => {
           p: {},
         }),
         It.isObject({
-          c: '["223456789012345678901234568"]',
+          c: '["a223456789012345678901234568"]',
           dynamic: "true",
           responseType: "serialized",
         })
       )
     ).thenResolve({
-      223456789012345678901234568: {
+      a223456789012345678901234568: {
         data: JSON.stringify({
           content: {
             id: "1234567890",
@@ -155,14 +155,14 @@ describe("test JoystickApiClient", () => {
 
     expect(
       await sut.getDynamicContent(
-        ["223456789012345678901234568"],
+        ["a223456789012345678901234568"],
         {
           params: {},
         },
         "serialized"
       )
     ).toEqual({
-      223456789012345678901234568: {
+      a223456789012345678901234568: {
         data: '{"content":{"id":"1234567890"}}',
         hash: "harsh",
         meta: {

@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - new Joystick constructor with two parameters:
-    - `properties`
-        - initial values for the Joystick API
-    - `services`
-        - optional
-        - allows custom implementation of APIClient, Cache, or Logger
+  - `properties`
+    - initial values for the Joystick API
+  - `services`
+    - optional
+    - allows custom implementation of APIClient, Cache, or Logger

@@ -33,5 +33,8 @@ export interface ApiClient {
    *  content: Pass in the new content, description and dynamiccontentmap
    *
    */
-  publishContentUpdate(contentId: string, payload: PublishContentUpdatePayload): Promise<void>;
+  publishContentUpdate(
+    contentId: string,
+    payload: PublishContentUpdatePayload
+  ): Promise<void>;
 }

@@ -32,7 +32,7 @@ export class InMemoryCache implements SdkCache {
   constructor(
     cacheExpirationSeconds: number,
     logger: Logger,
-    maxItemsInCache: number = 1_000,
+    maxItemsInCache = 1_000,
     nowFn: () => number = Date.now
   ) {
     this.validateCacheExpirationSeconds(cacheExpirationSeconds);
@@ -96,7 +96,8 @@ export class InMemoryCache implements SdkCache {
     const keysToDelete = [...this.cache.entries()]
       .sort(
         ([, leftValue], [, rightValue]) =>
-          rightValue.lastAccessedAtTimestampMs - leftValue.lastAccessedAtTimestampMs
+          rightValue.lastAccessedAtTimestampMs -
+          leftValue.lastAccessedAtTimestampMs
       )
       .slice(this.maxItemsInCache)
       .map(([key]) => key);

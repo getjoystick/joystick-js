@@ -18,7 +18,7 @@ export interface ApiClient {
    *
    */
   getDynamicContent(
-    contentIds: string[],
+    contentIds: readonly string[],
     payload: GetDynamicContentPayload,
     responseType?: "serialized"
   ): Promise<Record<string, ApiResponse>>;
@@ -33,8 +33,5 @@ export interface ApiClient {
    *  content: Pass in the new content, description and dynamiccontentmap
    *
    */
-  publishContentUpdate(
-    contentId: string,
-    payload: PublishContentUpdatePayload
-  ): Promise<void>;
+  publishContentUpdate(contentId: string, payload: PublishContentUpdatePayload): Promise<void>;
 }

@@ -44,9 +44,7 @@ describe("Construction of the client", () => {
   it("CN-02 - not sharing cache", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
-    when(() =>
-      mockApiClient.getDynamicContent(["10"], It.isObject({}))
-    ).thenResolve({
+    when(() => mockApiClient.getDynamicContent(["10"], It.isObject({}))).thenResolve({
       10: createSampleApiResponse({ title: "initial-data-from-http" }),
     });
 
@@ -67,9 +65,7 @@ describe("Construction of the client", () => {
       title: "initial-data-from-http",
     });
 
-    when(() =>
-      mockApiClient.getDynamicContent(["10"], It.isObject({}))
-    ).thenResolve({
+    when(() => mockApiClient.getDynamicContent(["10"], It.isObject({}))).thenResolve({
       10: createSampleApiResponse({ title: "fresh-data-from-http" }),
     });
 
@@ -248,9 +244,7 @@ describe("Validation of Client configuration", () => {
 
     expect(sut.getUserId()).toBe("");
 
-    expect(() => sut.setUserId(" ")).toThrow(
-      new InvalidArgumentError("Invalid userId: < >")
-    );
+    expect(() => sut.setUserId(" ")).toThrow(new InvalidArgumentError("Invalid userId: < >"));
   });
 
   it("CCVD-03 - getParams", () => {
@@ -308,9 +302,7 @@ describe("Validation of Client configuration", () => {
 
     expect(sut.getSemVer()).toBe("1.3.4");
 
-    expect(() => sut.setSemVer("2")).toThrowError(
-      new InvalidArgumentError("Invalid semVer: <2>")
-    );
+    expect(() => sut.setSemVer("2")).toThrowError(new InvalidArgumentError("Invalid semVer: <2>"));
 
     expect(() => sut.setSemVer("a.b.c")).toThrowError(
       new InvalidArgumentError("Invalid semVer: <a.b.c>")
@@ -417,15 +409,11 @@ describe("Get Contents method call", () => {
     });
 
     await expect(() => sut.getContents([])).rejects.toThrow(
-      new InvalidArgumentError(
-        "The contentIds parameter must be a non-empty array of strings"
-      )
+      new InvalidArgumentError("The contentIds parameter must be a non-empty array of strings")
     );
 
     await expect(() => sut.getContents(["1", "", "3"])).rejects.toThrow(
-      new InvalidArgumentError(
-        "The contentIds parameter must be a non-empty array of strings"
-      )
+      new InvalidArgumentError("The contentIds parameter must be a non-empty array of strings")
     );
   });
 
@@ -496,9 +484,7 @@ describe("Get Contents method call", () => {
   it("getContent - responseType=serialized fullResponse=true", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
-    when(() =>
-      mockApiClient.getDynamicContent(["key1"], It.isAny(), "serialized")
-    ).thenResolve({
+    when(() => mockApiClient.getDynamicContent(["key1"], It.isAny(), "serialized")).thenResolve({
       key1: createSampleApiResponse(
         JSON.stringify({
           id: "item.1",
@@ -533,9 +519,7 @@ describe("Get Contents method call", () => {
   it("GCS-12 - getContent - fullResponse=false", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
-    when(() =>
-      mockApiClient.getDynamicContent(["key2"], It.isAny(), It.isAny())
-    )
+    when(() => mockApiClient.getDynamicContent(["key2"], It.isAny(), It.isAny()))
       .thenResolve({
         key2: createSampleApiResponse({
           id: "item.1",
@@ -613,9 +597,7 @@ describe("Get Contents method call", () => {
   it("call API", async () => {
     mockApiClient = mock<JoystickApiClient>();
 
-    when(() =>
-      mockApiClient.getDynamicContent(["first_config"], It.isObject({}))
-    )
+    when(() => mockApiClient.getDynamicContent(["first_config"], It.isObject({})))
       .thenResolve({
         first_config: createSampleApiResponse({ name: "Miguel" }),
       })

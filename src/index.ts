@@ -61,14 +61,10 @@ export class Joystick {
 
     this.apiClient =
       services?.apiClient ??
-      new JoystickApiClient(
-        new AxiosClient(this.getApiKey(), this.logger),
-        this.logger
-      );
+      new JoystickApiClient(new AxiosClient(this.getApiKey(), this.logger), this.logger);
 
     this.cache =
-      services?.cache ??
-      new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
+      services?.cache ?? new InMemoryCache(this.getCacheExpirationSeconds(), this.logger);
   }
 
   getCache(): SdkCache {
@@ -136,10 +132,7 @@ export class Joystick {
    *
    */
   getCacheExpirationSeconds(): number {
-    return (
-      this.properties.options?.cacheExpirationSeconds ??
-      DEFAULT_CACHE_EXPIRATION_SECONDS
-    );
+    return this.properties.options?.cacheExpirationSeconds ?? DEFAULT_CACHE_EXPIRATION_SECONDS;
   }
 
   /**
@@ -163,17 +156,11 @@ export class Joystick {
       return await this.apiClient.publishContentUpdate(contentId, payload);
     } catch (e) {
       if (e instanceof ApiUnkownError) {
-        this.logger.error(
-          "Found an unknown error when publishing content update to Joystick"
-        );
+        this.logger.error("Found an unknown error when publishing content update to Joystick");
       } else if (e instanceof ApiServerError) {
-        this.logger.error(
-          "Found a server error when publishing content update to Joystick"
-        );
+        this.logger.error("Found a server error when publishing content update to Joystick");
       } else if (e instanceof ApiBadRequestError) {
-        this.logger.error(
-          "Found a client error when publishing content update to Joystick"
-        );
+        this.logger.error("Found a client error when publishing content update to Joystick");
       }
 
       throw e;
@@ -204,13 +191,26 @@ export class Joystick {
    * @return {TResult}, a generic type. Defaults to ApiResponse if not provided.
    *
    */
-  async getContent<TResult = ApiResponse>(
+  async getContent<TResult extends string = string>(
     contentId: string,
-    options?: ContentOptions
-  ): Promise<TResult> {
+    options?: ContentOptions & { fullResponse?: false; serialized: true }
+  ): Promise<TResult>;
+  async getContent<TResult extends string = string>(
+    contentId: string,
+    options?: ContentOptions & { fullResponse: true; serialized: true }
+  ): Promise<ApiResponse<TResult>>;
+  async getContent<TResult = any>(
+    contentId: string,
+    options?: ContentOptions & { fullResponse: true; serialized?: false }
+  ): Promise<ApiResponse<TResult>>;
+  async getContent<TResult = any>(
+    contentId: string,
+    options?: ContentOptions & { serialized?: false; fullResponse?: false }
+  ): Promise<TResult>;
+  async getContent(contentId: string, options?: ContentOptions) {
     const result = await this.getContents([contentId], options);
 
-    return result[contentId] as TResult;
+    return result[contentId];
   }
 
   /**
@@ -226,10 +226,32 @@ export class Joystick {
    * @return {Record<string,TResult>} TResult, a generic type. Defaults to ApiResponse if not provided.
    *
    */
-  async getContents<TResult = ApiResponse>(
-    contentIds: string[],
+  async getContents<
+    TResult extends { [K in TContentIds[number]]: string },
+    TContentIds extends readonly string[]
+  >(
+    contentIds: TContentIds,
+    options?: ContentOptions & { fullResponse?: false; serialized: true }
+  ): Promise<{ [K in TContentIds[number]]: TResult[K] }>;
+  async getContents<
+    TResult extends { [K in TContentIds[number]]: string },
+    TContentIds extends readonly string[]
+  >(
+    contentIds: TContentIds,
+    options?: ContentOptions & { fullResponse: true; serialized: true }
+  ): Promise<{ [K in TContentIds[number]]: ApiResponse<TResult[K]> }>;
+  async getContents<TResult extends Record<string, any>>(
+    contentIds: Array<keyof TResult>,
+    options?: ContentOptions & { fullResponse: true }
+  ): Promise<{ [K in keyof TResult]: ApiResponse<TResult[K]> }>;
+  async getContents<TResult extends Record<string, any>>(
+    contentIds: Array<keyof TResult>,
     options?: ContentOptions
-  ): Promise<Record<string, TResult>> {
+  ): Promise<TResult>;
+  async getContents<TContentIds extends readonly string[]>(
+    contentIds: TContentIds,
+    options?: ContentOptions
+  ): Promise<Record<string, any>> {
     this.validateContentIds(contentIds);
 
     const cacheKey = await this.buildCacheKey(contentIds, options);
@@ -251,21 +273,15 @@ export class Joystick {
         await this.cache.set(cacheKey, content);
       } catch (e) {
         if (e instanceof ApiUnkownError) {
-          this.logger.error(
-            "Found an unknown error when getting content from Joystick"
-          );
+          this.logger.error("Found an unknown error when getting content from Joystick");
         } else if (e instanceof MultipleContentsApiError) {
           this.logger.error(
             `The following errors found when calling Multiple Content API:\n${e.message}`
           );
         } else if (e instanceof ApiServerError) {
-          this.logger.error(
-            "Found a server error when getting content from Joystick"
-          );
+          this.logger.error("Found a server error when getting content from Joystick");
         } else if (e instanceof ApiBadRequestError) {
-          this.logger.error(
-            "Found a client error when getting content from Joystick"
-          );
+          this.logger.error("Found a client error when getting content from Joystick");
         }
 
         throw e;
@@ -273,7 +289,7 @@ export class Joystick {
     }
 
     if (options?.fullResponse) {
-      return content as Record<string, TResult>;
+      return content;
     }
 
     return this.simplifyResponse(content);
@@ -337,7 +353,7 @@ export class Joystick {
     return serialized ?? this.properties.options?.serialized;
   }
 
-  private simplifyResponse(freshContent: Record<string, ApiResponse>) {
+  private simplifyResponse<T>(freshContent: Record<string, ApiResponse<T>>) {
     return Object.entries(freshContent).reduce(
       (acc, [key, value]) => ({
         ...acc,
@@ -348,7 +364,7 @@ export class Joystick {
   }
 
   private async buildCacheKey(
-    contentIds: string[],
+    contentIds: readonly string[],
     options: ContentOptions | undefined
   ): Promise<string> {
     const parts = [
@@ -364,15 +380,13 @@ export class Joystick {
     return await sha256ToHex(parts);
   }
 
-  private getParamsSortedByKeyAsc(
-    params: Record<string, unknown> = {}
-  ): Record<string, unknown> {
+  private getParamsSortedByKeyAsc(params: Record<string, unknown> = {}): Record<string, unknown> {
     return Object.entries(params)
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
   }
 
-  private validateContentIds(contentIds: string[]) {
+  private validateContentIds(contentIds: readonly string[]) {
     if (
       !contentIds ||
       contentIds.length == 0 ||
@@ -390,9 +404,7 @@ export class Joystick {
     }
   }
 
-  private validateCacheExpirationSeconds(
-    cacheExpirationSeconds: number | undefined
-  ) {
+  private validateCacheExpirationSeconds(cacheExpirationSeconds: number | undefined) {
     if (cacheExpirationSeconds != undefined && cacheExpirationSeconds < 0) {
       throw new InvalidArgumentError(
         `Invalid cacheExpirationSeconds: <${cacheExpirationSeconds}>`

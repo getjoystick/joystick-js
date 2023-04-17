@@ -5,8 +5,8 @@ export interface Meta {
   seg: object[];
 }
 
-export interface ApiResponse {
-  data: string | Record<string, unknown>;
+export interface ApiResponse<TData = any> {
+  data: TData;
   hash: string;
   meta: Meta;
 }

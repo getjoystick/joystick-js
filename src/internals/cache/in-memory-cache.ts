@@ -96,8 +96,7 @@ export class InMemoryCache implements SdkCache {
     const keysToDelete = [...this.cache.entries()]
       .sort(
         ([, leftValue], [, rightValue]) =>
-          rightValue.lastAccessedAtTimestampMs -
-          leftValue.lastAccessedAtTimestampMs
+          rightValue.lastAccessedAtTimestampMs - leftValue.lastAccessedAtTimestampMs
       )
       .slice(this.maxItemsInCache)
       .map(([key]) => key);

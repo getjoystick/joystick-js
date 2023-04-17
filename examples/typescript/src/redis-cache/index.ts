@@ -44,11 +44,7 @@ export class RedisCache implements SdkCache {
 
     this._keys.push(key);
 
-    await this._client.setEx(
-      key,
-      this._cacheExpirationSeconds,
-      JSON.stringify(value)
-    );
+    await this._client.setEx(key, this._cacheExpirationSeconds, JSON.stringify(value));
   }
 
   setCacheExpirationSeconds(cacheExpirationSeconds: number): void {

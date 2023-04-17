@@ -49,10 +49,7 @@ export class JoystickApiClient implements ApiClient {
 
     this.checkForErrors(response);
 
-    return Object.entries(response).reduce(
-      (acc, [key, value]) => ({ ...acc, [key]: value }),
-      {}
-    );
+    return Object.entries(response).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
   }
 
   async publishContentUpdate(
@@ -65,14 +62,11 @@ export class JoystickApiClient implements ApiClient {
     this.validateContent(content);
     this.validateDynamicContentMap(dynamicContentMap);
 
-    await this.client.put(
-      `https://capi.getjoystick.com/api/v1/config/${contentId}`,
-      {
-        d: description,
-        c: content,
-        m: dynamicContentMap,
-      }
-    );
+    await this.client.put(`https://capi.getjoystick.com/api/v1/config/${contentId}`, {
+      d: description,
+      c: content,
+      m: dynamicContentMap,
+    });
   }
 
   private validateDescription(description: string) {
@@ -87,9 +81,7 @@ export class JoystickApiClient implements ApiClient {
     try {
       JSON.stringify(content);
     } catch {
-      throw new InvalidArgumentError(
-        "Invalid content. It should be JSON encodable"
-      );
+      throw new InvalidArgumentError("Invalid content. It should be JSON encodable");
     }
   }
 
@@ -100,9 +92,7 @@ export class JoystickApiClient implements ApiClient {
       try {
         JSON.stringify(dynamicContentMap);
       } catch {
-        throw new InvalidArgumentError(
-          "Invalid dynamicContentMap. It should be JSON encodable"
-        );
+        throw new InvalidArgumentError("Invalid dynamicContentMap. It should be JSON encodable");
       }
     }
   }

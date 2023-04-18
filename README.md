@@ -1,4 +1,4 @@
-# JS client for [Joystick](https://www.getjoystick.com/)
+# Javascript client for [Joystick](https://www.getjoystick.com/)
 
 [![GitHub Actions](https://github.com/getjoystick/joystick-js/actions/workflows/build.yaml/badge.svg)](https://github.com/getjoystick/joystick-js/actions?query=branch%3Amain)
 [![Latest Stable Version](https://img.shields.io/npm/v/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
@@ -19,8 +19,6 @@ via [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#usin
 ```bash
 npm install @getjoystick/joystick-js
 ```
-
-The default implemn
 
 ## Usage
 
@@ -179,7 +177,7 @@ instead of using the issue tracker.
 ## Credits
 
 - [Joystick](https://github.com/getjoystick)
-- [All Contributors](../../contributors)
+- [All Contributors](graphs/contributors)
 
 ## License
 

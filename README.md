@@ -135,8 +135,7 @@ client.setSerialized(true);
 ### Caching
 
 By default, the client uses [InMemoryCache](./src/internals/cache/in-memory-cache.ts), based on Map,
-which means that if you build the HTTP application where each process exits after the request
-has been processed – the cache will be erased after the process is finished.
+which means the cache will be erased after application restart.
 
 You can specify your cache implementation by implementing the interface [SdkCache](./src/internals/cache/sdk-cache.ts).
 

@@ -10,8 +10,15 @@ const cache = new RedisCache(2);
 const joystick = new Joystick(
   {
     apiKey: process.env.JOYSTICK_API_KEY || "",
+    semVer: "0.0.1",
+    userId: "user-id-1",
+    params: {
+      param1: "value1",
+      param2: "value2",
+    },
     options: {
-      cacheExpirationSeconds: 2,
+      cacheExpirationSeconds: 600,
+      serialized: true,
     },
   },
   {

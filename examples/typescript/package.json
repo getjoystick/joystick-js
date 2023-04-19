@@ -17,7 +17,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@getjoystick/joystick-js": "^0.0.1-alpha.3",
+    "@getjoystick/joystick-js": "^0.1.0",
     "dotenv": "^16.0.3",
     "node-cache": "^5.1.2",
     "redis": "^4.6.5"

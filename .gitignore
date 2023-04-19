@@ -1,7 +1,0 @@
-node_modules
-coverage
-.env
-.idea
-dist
-test-api.sh
-*.js

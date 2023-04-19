@@ -1,0 +1,25 @@
+name: Test code
+
+on:
+  push:
+    branches:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        version: [16, 18, 19]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "${{ matrix.version }}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test

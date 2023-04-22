@@ -206,19 +206,23 @@ export class Joystick {
    */
   async getContent<TResult extends string = string>(
     contentId: string,
-    options?: ContentOptions & { fullResponse?: false; serialized: true }
+    options: ContentOptions & { fullResponse?: false; serialized: true }
   ): Promise<TResult>;
   async getContent<TResult extends string = string>(
     contentId: string,
-    options?: ContentOptions & { fullResponse: true; serialized: true }
+    options: ContentOptions & { fullResponse: true; serialized: true }
   ): Promise<ApiResponse<TResult>>;
   async getContent<TResult = any>(
     contentId: string,
-    options?: ContentOptions & { fullResponse: true; serialized?: false }
+    options: ContentOptions & { fullResponse: true; serialized?: false }
   ): Promise<ApiResponse<TResult>>;
   async getContent<TResult = any>(
     contentId: string,
-    options?: ContentOptions & { serialized?: false; fullResponse?: false }
+    options: ContentOptions & { serialized?: false; fullResponse?: false }
+  ): Promise<TResult>;
+  async getContent<TResult = any>(
+    contentId: string,
+    options?: ContentOptions,
   ): Promise<TResult>;
   async getContent(contentId: string, options?: ContentOptions) {
     const result = await this.getContents([contentId], options);
@@ -244,19 +248,23 @@ export class Joystick {
     TContentIds extends readonly string[]
   >(
     contentIds: TContentIds,
-    options?: ContentOptions & { fullResponse?: false; serialized: true }
+    options: ContentOptions & { fullResponse?: false; serialized: true }
   ): Promise<{ [K in TContentIds[number]]: TResult[K] }>;
   async getContents<
     TResult extends { [K in TContentIds[number]]: string },
     TContentIds extends readonly string[]
   >(
     contentIds: TContentIds,
-    options?: ContentOptions & { fullResponse: true; serialized: true }
+    options: ContentOptions & { fullResponse: true; serialized: true }
   ): Promise<{ [K in TContentIds[number]]: ApiResponse<TResult[K]> }>;
   async getContents<TResult extends Record<string, any>>(
     contentIds: Array<keyof TResult>,
-    options?: ContentOptions & { fullResponse: true }
+    options: ContentOptions & { fullResponse: true }
   ): Promise<{ [K in keyof TResult]: ApiResponse<TResult[K]> }>;
+  async getContents<TResult extends Record<string, any>>(
+    contentIds: Array<keyof TResult>,
+    options: ContentOptions
+  ): Promise<TResult>;
   async getContents<TResult extends Record<string, any>>(
     contentIds: Array<keyof TResult>,
     options?: ContentOptions

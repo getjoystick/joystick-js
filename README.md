@@ -11,8 +11,8 @@ Joystick is a modern remote config platform built for to manage configurations e
 
 The @getjoystick/joystick-js library simplifies how your Javascript/Typescript project can communicate with the Joystick API to get remote configs over a REST API.
 
-* [Full Developer Documentation](https://docs.getjoystick.com)
-* [Joystick Remote Config](https://getjoystick.com)
+- [Full Developer Documentation](https://docs.getjoystick.com)
+- [Joystick Remote Config](https://getjoystick.com)
 
 ## Installation
 
@@ -44,7 +44,8 @@ joystickClient
 const contentId1 = await joystickClient.getContent("content-id1");
 
 // Request a single configuration (typescript)
-const contentId1 = await joystickClient.getContent<TypeForContentId1>("content-id1");
+const contentId1 =
+  (await joystickClient.getContent) < TypeForContentId1 > "content-id1";
 
 // Request multiple configurations at the same time
 joystickClient
@@ -55,16 +56,17 @@ joystickClient
   });
 
 // Request multiple configurations at the same time
-const configurations = await joystickClient.getContents(["content-id1", "content-id2"]);
+const configurations = await joystickClient.getContents([
+  "content-id1",
+  "content-id2",
+]);
 console.log(configurations);
 
 // {
 //     "content-id1": {...},
 //     "content-id2": {...}
 // }
-
 ```
-
 
 ### Specifying Additional Parameters
 
@@ -80,12 +82,12 @@ const joystickClient = new Joystick({
   userId: "user-id-1",
   params: {
     param1: "value1",
-    param2: "value2"
+    param2: "value2",
   },
   options: {
     cacheExpirationSeconds: 600, // default 600 (10 mins)
-    serialized: false // default false
-  }
+    serialized: false, // default false
+  },
 });
 ```
 
@@ -129,11 +131,11 @@ This option for a serialized response can be set globally for every API call by 
 const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
   options: {
-    serialized: true
-  }
+    serialized: true,
+  },
 });
 
-// OR 
+// OR
 
 joystickClient.setSerialized(true);
 ```

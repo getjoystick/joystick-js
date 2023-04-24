@@ -11,9 +11,9 @@
   "scripts": {
     "build": "tsup --format=esm,cjs --minify --treeshake",
     "pretest": "npm run build",
-    "lint": "eslint --ext .ts src tests examples && prettier --check",
+    "lint": "eslint --ext .ts src tests examples && prettier --check .",
     "lint-fix": "eslint --fix --ext .ts src tests examples && prettier --write .",
-    "test": " tsc ./tests/types/**/*.ts && jest"
+    "test": " npx tsc -p ./tsconfig.types-test.json && jest"
   },
   "author": "getjoystick",
   "license": "MIT",
@@ -24,6 +24,7 @@
     "axios-mock-adapter": "^1.21.2",
     "dotenv": "^16.0.3",
     "eslint": "^8.38.0",
+    "expect-type": "^0.15.0",
     "jest": "^29.4.3",
     "prettier": "^2.8.7",
     "strong-mock": "^8.0.1",

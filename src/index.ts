@@ -204,14 +204,18 @@ export class Joystick {
    * @return {TResult}, a generic type. Defaults to ApiResponse if not provided.
    *
    */
-  async getContent<TResult extends string = string>(
+  async getContent(
     contentId: string,
     options: ContentOptions & { fullResponse?: false; serialized: true }
-  ): Promise<TResult>;
-  async getContent<TResult extends string = string>(
+  ): Promise<string>;
+  async getContent(
     contentId: string,
     options: ContentOptions & { fullResponse: true; serialized: true }
-  ): Promise<ApiResponse<TResult>>;
+  ): Promise<ApiResponse<string>>;
+  async getContent<T>(
+    contentId: string,
+    options: ContentOptions & { serialized: true }
+  ): Promise<never>;
   async getContent<TResult = any>(
     contentId: string,
     options: ContentOptions & { fullResponse: true; serialized?: false }
@@ -222,7 +226,7 @@ export class Joystick {
   ): Promise<TResult>;
   async getContent<TResult = any>(
     contentId: string,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Promise<TResult>;
   async getContent(contentId: string, options?: ContentOptions) {
     const result = await this.getContents([contentId], options);
@@ -243,20 +247,19 @@ export class Joystick {
    * @return {Record<string,TResult>} TResult, a generic type. Defaults to ApiResponse if not provided.
    *
    */
-  async getContents<
-    TResult extends { [K in TContentIds[number]]: string },
-    TContentIds extends readonly string[]
-  >(
-    contentIds: TContentIds,
+  async getContents<TContentId extends string>(
+    contentIds: TContentId[],
     options: ContentOptions & { fullResponse?: false; serialized: true }
-  ): Promise<{ [K in TContentIds[number]]: TResult[K] }>;
-  async getContents<
-    TResult extends { [K in TContentIds[number]]: string },
-    TContentIds extends readonly string[]
-  >(
-    contentIds: TContentIds,
+  ): Promise<{ [K in TContentId]: string }>;
+  async getContents<TContentId extends string>(
+    contentIds: TContentId[],
     options: ContentOptions & { fullResponse: true; serialized: true }
-  ): Promise<{ [K in TContentIds[number]]: ApiResponse<TResult[K]> }>;
+  ): Promise<{ [K in TContentId]: ApiResponse<string> }>;
+  async getContents<T>(
+    contentIds: string[],
+    options: ContentOptions & { serialized: true }
+  ): Promise<never>;
+
   async getContents<TResult extends Record<string, any>>(
     contentIds: Array<keyof TResult>,
     options: ContentOptions & { fullResponse: true }
@@ -264,7 +267,7 @@ export class Joystick {
   async getContents<TResult extends Record<string, any>>(
     contentIds: Array<keyof TResult>,
     options: ContentOptions
-  ): Promise<TResult>;
+  ): Promise<{ [K in keyof TResult]: TResult[K] }>;
   async getContents<TResult extends Record<string, any>>(
     contentIds: Array<keyof TResult>,
     options?: ContentOptions

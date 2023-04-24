@@ -1,0 +1,33 @@
+name: Test code
+
+on:
+  push:
+    branches:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        version: [16, 18, 19]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: tfisicaro/commit-email-validation-action@v1
+        with:
+          domains: "getjoystick.com;github.com"
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "${{ matrix.version }}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run eslint and prettier check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test

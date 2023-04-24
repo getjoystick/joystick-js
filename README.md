@@ -26,7 +26,7 @@ npm install @getjoystick/joystick-js
 
 Using Joystick to get remote configurations in your Javascript or Typescript project is a breeze.
 
-```js
+```ts
 // Import the package.
 import { Joystick } from "@getjoystick/joystick-js";
 
@@ -35,37 +35,27 @@ const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
 });
 
-// Request a single configuration
-joystickClient
-  .getContent("content-id1")
-  .then((getContentResponse) => console.log(getContentResponse.myProperty1));
+(async () => {
+  // Request a single configuration
+  const contentId1 = await joystickClient.getContent("content-id1");
 
-// Request a single configuration
-const contentId1 = await joystickClient.getContent("content-id1");
+  // Request a single configuration (typescript)
+  const contentId1Typed = await joystickClient.getContent<TypeForContentId1>(
+    "content-id1"
+  );
 
-// Request a single configuration (typescript)
-const contentId1 =
-  (await joystickClient.getContent) < TypeForContentId1 > "content-id1";
+  // Request multiple configurations at the same time
+  const configurations = await joystickClient.getContents([
+    "content-id1",
+    "content-id2",
+  ]);
+  console.log(configurations);
 
-// Request multiple configurations at the same time
-joystickClient
-  .getContents(["content-id1", "content-id2"])
-  .then((getContentsResponse) => {
-    console.log(getContentsResponse["content-id1"].myProperty1);
-    console.log(getContentsResponse["content-id2"].myProperty2);
-  });
-
-// Request multiple configurations at the same time
-const configurations = await joystickClient.getContents([
-  "content-id1",
-  "content-id2",
-]);
-console.log(configurations);
-
-// {
-//     "content-id1": {...},
-//     "content-id2": {...}
-// }
+  // {
+  //     "content-id1": {...},
+  //     "content-id2": {...}
+  // }
+})();
 ```
 
 ### Specifying Additional Parameters
@@ -74,7 +64,7 @@ When creating the `Joystick` object, you can specify additional parameters which
 
 For more details see [API documentation](https://docs.getjoystick.com/api-reference/).
 
-```js
+```ts
 // Initializing a client with options
 const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
@@ -97,7 +87,7 @@ const joystickClient = new Joystick({
 
 In most, you will just want the contents of your configuration. In advanced use cases where you want to process the AB testing or segmentation information, you can specify the `fullResponse` option to the client methods. The client will return you raw API response.
 
-```js
+```ts
 joystickClient
   .getContent("content-id1", { fullResponse: true })
   .then((getContentResponse) => console.log(getContentResponse));
@@ -113,7 +103,7 @@ joystickClient
 
 You can get the contents of your configuration serialized. When set as `true`, we will pass query parameter `responseType=serialized` to [Joystick API](https://docs.getjoystick.com/api-reference-combine/).
 
-```js
+```ts
 joystickClient
   .getContent("content-id1", { serialized: true })
   .then((getContentResponse) => console.log(getContentResponse));
@@ -127,7 +117,7 @@ joystickClient
 
 This option for a serialized response can be set globally for every API call by setting `setSerialized(true)` when initializing the client:
 
-```js
+```ts
 const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
   options: {
@@ -144,7 +134,7 @@ joystickClient.setSerialized(true);
 
 To ignore the existing cache when requesting a config – pass this option as `true`.
 
-```js
+```ts
 joystickClient
   .getContent("content-id1", { refresh: true })
   .then((getContentResponse) => console.log(getContentResponse));
@@ -156,29 +146,44 @@ joystickClient
   .then((getContentsResponse) => console.log(getContentsResponse));
 ```
 
+### Error handling
+
+The client can raise different types of exceptions with the base class of `JoystickError`.
+
+````ts
+try {
+  await joystickClient.getContents(["content-id1", "content-id2"]);
+} catch (e) {
+  if (e instanceof ApiHttpError) {
+    // Handle HTTP error (i.e. timeout, or invalid HTTP code)
+  } else if (e instanceof MultipleContentsApiException) {
+    // Handle API exception (i.e. content is not found, or some of the keys can't be retrieved)
+  }
+}
+
 ### Caching
 
-By default, the client uses [InMemoryCache](https://github.com/getjoystick/joystick-js/tree/main/src/internals/cache/in-memory-cache.ts), based on Map, which means the cache will be erased after application restart.
+By default, the client uses [InMemoryCache](./src/internals/cache/in-memory-cache.ts), based on Map, which means the cache will be erased after application restart.
 
-You can specify your own cache implementation by implementing the interface [SdkCache](https://github.com/getjoystick/joystick-js/tree/main/src/internals/cache/sdk-cache.ts).
+You can specify your own cache implementation by implementing the interface [SdkCache](./src/internals/cache/sdk-cache.ts).
 
-See [`examples/typescript/node-cache`](https://github.com/getjoystick/joystick-js/tree/main/examples/typescript/src/node-cache) or [`examples/typescript/redis-cache`](https://github.com/getjoystick/joystick-js/tree/main/examples/typescript/src/redis-cache) for more details.
+See [`examples/typescript/node-cache`](./examples/typescript/src/node-cache) or [`examples/typescript/redis-cache`](./examples/typescript/src/redis-cache) for more details.
 
 #### Clear the cache
 
 If you want to clear the cache:
 
-```js
+```ts
 joystickClient.clearCache().then(() => console.log("Cache cleared!"));
-```
+````
 
 ### HTTP Client
 
 You can provide a custom HTTP client, which may be useful for specifying a custom proxy or collecting detailed metrics about HTTP requests.
 
-Change your HTTP client implementation by implementing the interface [HttpClient](https://github.com/getjoystick/joystick-js/tree/main/src/internals/client/http-client.ts).
+Change your HTTP client implementation by implementing the interface [HttpClient](./src/internals/client/http-client.ts).
 
-See [`src/internals/client/axios-client`](https://github.com/getjoystick/joystick-js/tree/main/src/internals/client/axios-client.ts) for more details.
+See [`src/internals/client/axios-client`](./src/internals/client/axios-client.ts) for more details.
 
 ## Testing
 

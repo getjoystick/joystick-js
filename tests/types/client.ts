@@ -482,7 +482,7 @@ const client = new Joystick({ apiKey: "test" });
       await client.getContents<A>(["cid1", "cid2"], {
         serialized: true,
         fullResponse: true,
-        refresh: true
+        refresh: true,
       })
     ).toBeNever();
   })();

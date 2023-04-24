@@ -1,11 +1,12 @@
 import * as dotenv from "dotenv";
-import { Joystick } from "@getjoystick/joystick-js";
+import { Joystick, MultipleContentsApiError } from "@getjoystick/joystick-js";
 import { RedisCache } from "./redis-cache";
+// import { NodeCacheImpl } from "./node-cache";
 
 dotenv.config();
 
 const cache = new RedisCache(2);
-//const cache = new NodeCacheImpl(2);
+// const cache = new NodeCacheImpl(2);
 
 const joystick = new Joystick(
   {
@@ -26,6 +27,17 @@ const joystick = new Joystick(
   }
 );
 (async function () {
+  try {
+    await joystick.getContent("not_existing_cid", {
+      fullResponse: true,
+    });
+  } catch (e) {
+    if (e instanceof MultipleContentsApiError) {
+      console.log("It is an error from the MultipleContentsApi", e);
+    } else {
+      throw e;
+    }
+  }
   let data = await joystick.getContent("first_config", {
     fullResponse: true,
   });

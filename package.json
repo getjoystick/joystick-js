@@ -13,7 +13,7 @@
     "pretest": "npm run build",
     "lint": "eslint --ext .ts src tests examples && prettier --check",
     "lint-fix": "eslint --fix --ext .ts src tests examples && prettier --write .",
-    "test": "jest"
+    "test": " tsc ./tests/types/**/*.ts && jest"
   },
   "author": "getjoystick",
   "license": "MIT",

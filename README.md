@@ -1,20 +1,22 @@
-# Javascript client for [Joystick](https://www.getjoystick.com/)
+# Javascript Client for [Joystick Remote Config](https://www.getjoystick.com/)
 
 [![GitHub Actions](https://github.com/getjoystick/joystick-js/actions/workflows/build.yaml/badge.svg)](https://github.com/getjoystick/joystick-js/actions?query=branch%3Amain)
 [![Latest Stable Version](https://img.shields.io/npm/v/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 [![Total Downloads](https://img.shields.io/npm/dw/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 [![License](https://img.shields.io/npm/l/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 
-This is the library that simplifies the way how you can communicate with [Joystick API](https://docs.getjoystick.com/).
+Use Joystick to manage and use JSON remote configs easily with any Javascript/Typescript projects. Get configurations out of your code base. Update your configurations instantly without a long build, deploy process.
 
-## Requirements
+Joystick is a modern remote config platform built for to manage configurations effortless in one place, behind one API. We are natively multi-environment, have automated version control with advanced work-flow & permissions management, and much more. Your entire team will love us.
 
-NodeJS 16 and later
+The @getjoystick/joystick-js library simplifies how your Javascript/Typescript project can communicate with the Joystick API to get remote configs over a REST API.
+
+* [Full Developer Documentation](https://docs.getjoystick.com)
+* [Joystick Remote Config](https://getjoystick.com)
 
 ## Installation
 
-You can install the package
-via [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#using-a-node-installer-to-install-nodejs-and-npm):
+Requires NodeJS 16 and later. Install via [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#using-a-node-installer-to-install-nodejs-and-npm):
 
 ```bash
 npm install @getjoystick/joystick-js
@@ -22,43 +24,57 @@ npm install @getjoystick/joystick-js
 
 ## Usage
 
-To use the client, import the package.
+Using Joystick to get remote configurations in your Javascript or Typescript project is a breeze.
 
 ```js
+// Import the package.
 import { Joystick } from "@getjoystick/joystick-js";
-```
 
-Simple usage looks like this:
-
-```js
-const client = new Joystick({
+// Initialize a client with a Joystick API Key
+const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
 });
 
-client
+// Request a single configuration
+joystickClient
+  .getContent("content-id1")
+  .then((getContentResponse) => console.log(getContentResponse.myProperty1));
+
+// Request a single configuration
+const contentId1 = await joystickClient.getContent("content-id1");
+
+// Request a single configuration (typescript)
+const contentId1 = await joystickClient.getContent<TypeForContentId1>("content-id1");
+
+// Request multiple configurations at the same time
+joystickClient
   .getContents(["content-id1", "content-id2"])
   .then((getContentsResponse) => {
     console.log(getContentsResponse["content-id1"].myProperty1);
     console.log(getContentsResponse["content-id2"].myProperty2);
   });
+
+// Request multiple configurations at the same time
+const configurations = await joystickClient.getContents(["content-id1", "content-id2"]);
+console.log(configurations);
+
+// {
+//     "content-id1": {...},
+//     "content-id2": {...}
+// }
+
 ```
 
-### Requesting Content by single Content Id
+
+### Specifying Additional Parameters
+
+When creating the `Joystick` object, you can specify additional parameters which will be used by all API calls to the Joystick API. These additional parameters are used for AB Testing (`userId`), segmentation (`params`), and backward-compatible version delivery (`semVer`).
+
+For more details see [API documentation](https://docs.getjoystick.com/api-reference/).
 
 ```js
-client
-  .getContent("content-id1")
-  .then((getContentResponse) => console.log(getContentResponse.myProperty1));
-```
-
-### Specifying additional parameters:
-
-When creating the `Joystick` object, you can specify additional parameters which will be used
-by all API calls from the client, for more details see
-[API documentation](https://docs.getjoystick.com/api-reference/):
-
-```js
-const client = new Joystick({
+// Initializing a client with options
+const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
   semVer: "0.0.1",
   userId: "user-id-1",
@@ -67,98 +83,100 @@ const client = new Joystick({
     param2: "value2"
   },
   options: {
-    cacheExpirationSeconds: 600, // 10 mins
-    serialized: true
+    cacheExpirationSeconds: 600, // default 600 (10 mins)
+    serialized: false // default false
   }
 });
 ```
 
-### Options
+### Additional Request Options
 
 #### `fullResponse`
 
-In most of the cases you will be not interested in the full response from the API, but if you're you can specify
-`fullResponse` option to the client methods. The client will return you raw API response:
+In most, you will just want the contents of your configuration. In advanced use cases where you want to process the AB testing or segmentation information, you can specify the `fullResponse` option to the client methods. The client will return you raw API response.
 
 ```js
-client
+joystickClient
   .getContent("content-id1", { fullResponse: true })
   .then((getContentResponse) => console.log(getContentResponse));
+
 // OR
-client
+
+joystickClient
   .getContents(["content-id1", "content-id2"], { fullResponse: true })
   .then((getContentsResponse) => console.log(getContentsResponse));
 ```
 
 #### `serialized`
 
-When `true`, we will pass query parameter `responseType=serialized`
-to [Joystick API](https://docs.getjoystick.com/api-reference-combine/).
+You can get the contents of your configuration serialized. When set as `true`, we will pass query parameter `responseType=serialized` to [Joystick API](https://docs.getjoystick.com/api-reference-combine/).
 
 ```js
-client
+joystickClient
   .getContent("content-id1", { serialized: true })
   .then((getContentResponse) => console.log(getContentResponse));
+
 // OR
-client
+
+joystickClient
   .getContents(["content-id1", "content-id2"], { serialized: true })
   .then((getContentsResponse) => console.log(getContentsResponse));
 ```
 
-#### `refresh`
-
-If you want to ignore existing cache and request the new config – pass this option as `true`.
+This option for a serialized response can be set globally for every API call by setting `setSerialized(true)` when initializing the client:
 
 ```js
-client
-  .getContent("content-id1", { refresh: true })
-  .then((getContentResponse) => console.log(getContentResponse));
-// OR
-client
-  .getContents(["content-id1", "content-id2"], { refresh: true })
-  .then((getContentsResponse) => console.log(getContentsResponse));
-```
-
-This option can be set for every API call from the client by setting `setSerialized(true)`:
-
-```js
-const client = new Joystick({
+const joystickClient = new Joystick({
   apiKey: process.env.JOYSTICK_API_KEY,
   options: {
     serialized: true
   }
 });
+
 // OR 
-client.setSerialized(true);
+
+joystickClient.setSerialized(true);
+```
+
+#### `refresh`
+
+To ignore the existing cache when requesting a config – pass this option as `true`.
+
+```js
+joystickClient
+  .getContent("content-id1", { refresh: true })
+  .then((getContentResponse) => console.log(getContentResponse));
+
+// OR
+
+joystickClient
+  .getContents(["content-id1", "content-id2"], { refresh: true })
+  .then((getContentsResponse) => console.log(getContentsResponse));
 ```
 
 ### Caching
 
-By default, the client uses [InMemoryCache](./src/internals/cache/in-memory-cache.ts), based on Map,
-which means the cache will be erased after application restart.
+By default, the client uses [InMemoryCache](https://github.com/getjoystick/joystick-js/tree/main/src/internals/cache/in-memory-cache.ts), based on Map, which means the cache will be erased after application restart.
 
-You can specify your cache implementation by implementing the interface [SdkCache](./src/internals/cache/sdk-cache.ts).
+You can specify your own cache implementation by implementing the interface [SdkCache](https://github.com/getjoystick/joystick-js/tree/main/src/internals/cache/sdk-cache.ts).
 
-See [`examples/typescript/node-cache`](./examples/typescript/src/node-cache)
-or [`examples/typescript/redis-cache`](./examples/typescript/src/redis-cache) for more details.
+See [`examples/typescript/node-cache`](https://github.com/getjoystick/joystick-js/tree/main/examples/typescript/src/node-cache) or [`examples/typescript/redis-cache`](https://github.com/getjoystick/joystick-js/tree/main/examples/typescript/src/redis-cache) for more details.
 
 #### Clear the cache
 
-If you want to clear the cache – run:
+If you want to clear the cache:
 
 ```js
-client.clearCache().then(() => console.log("Cache cleared!"));
+joystickClient.clearCache().then(() => console.log("Cache cleared!"));
 ```
 
 ### HTTP Client
 
-If you want to provide custom HTTP client, which may be useful for use-cases like specifying custom proxy,
-collecting detailed metrics about HTTP requests,
+You can provide a custom HTTP client, which may be useful for specifying a custom proxy or collecting detailed metrics about HTTP requests.
 
-You can your HTTP client implementation by implementing the
-interface [HttpClient](./src/internals/client/http-client.ts).
+Change your HTTP client implementation by implementing the interface [HttpClient](https://github.com/getjoystick/joystick-js/tree/main/src/internals/client/http-client.ts).
 
-See [`src/internals/client/axios-client`](./src/internals/client/axios-client.ts) for more details.
+See [`src/internals/client/axios-client`](https://github.com/getjoystick/joystick-js/tree/main/src/internals/client/axios-client.ts) for more details.
 
 ## Testing
 
@@ -167,11 +185,6 @@ To run unit tests, just run:
 ```bash
 npm test
 ```
-
-### Security
-
-If you discover any security related issues, please email [letsgo@getjoystick.com](letsgo@getjoystick.com)
-instead of using the issue tracker.
 
 ## Credits
 

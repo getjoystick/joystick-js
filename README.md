@@ -1,6 +1,6 @@
 # Javascript Client for [Joystick Remote Config](https://www.getjoystick.com/)
 
-[![GitHub Actions](https://github.com/getjoystick/joystick-js/actions/workflows/build.yaml/badge.svg)](https://github.com/getjoystick/joystick-js/actions?query=branch%3Amain)
+[![Test code](https://github.com/getjoystick/joystick-js/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/getjoystick/joystick-js/actions/workflows/build.yaml)
 [![Latest Stable Version](https://img.shields.io/npm/v/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 [![Total Downloads](https://img.shields.io/npm/dw/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 [![License](https://img.shields.io/npm/l/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
@@ -150,7 +150,7 @@ joystickClient
 
 The client can raise different types of exceptions with the base class of `JoystickError`.
 
-````ts
+```ts
 try {
   await joystickClient.getContents(["content-id1", "content-id2"]);
 } catch (e) {
@@ -160,6 +160,7 @@ try {
     // Handle API exception (i.e. content is not found, or some of the keys can't be retrieved)
   }
 }
+```
 
 ### Caching
 
@@ -175,7 +176,7 @@ If you want to clear the cache:
 
 ```ts
 joystickClient.clearCache().then(() => console.log("Cache cleared!"));
-````
+```
 
 ### HTTP Client
 

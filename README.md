@@ -5,11 +5,9 @@
 [![Total Downloads](https://img.shields.io/npm/dw/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 [![License](https://img.shields.io/npm/l/@getjoystick/joystick-js)](https://www.npmjs.com/package/@getjoystick/joystick-js)
 
-Use Joystick to manage and use JSON remote configs easily with any Javascript/Typescript projects. Get configurations out of your code base. Update your configurations instantly without a long build, deploy process.
+Streamline your app or game development process with Joystick's Javascript/Typescript JSON remote config platform. Easily manage and update configurations without codebase clutter or lengthy deployment processes. Our modern platform offers advanced workflow management, automated version control, and seamless integration with any Javascript or Typescript project. Plus, our native multi-environment support with permissions and review workflow ensures smooth operations your entire team will love.
 
-Joystick is a modern remote config platform built for to manage configurations effortless in one place, behind one API. We are natively multi-environment, have automated version control with advanced work-flow & permissions management, and much more. Your entire team will love us.
-
-The @getjoystick/joystick-js library simplifies how your Javascript/Typescript project can communicate with the Joystick API to get remote configs over a REST API.
+Experience the benefits of simplified configuration management with Joystick. Try our @getjoystick/joystick-js library today to see how easy it is to my your app or game dynamic and fundamentally upgrade your team's workflow.
 
 - [Full Developer Documentation](https://docs.getjoystick.com)
 - [Joystick Remote Config](https://getjoystick.com)

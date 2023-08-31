@@ -17,7 +17,7 @@ import { InvalidArgumentError } from "./errors/invalid-argument-error";
 import { PublishContentUpdatePayload } from "./models/publish-content-update-payload";
 import { Services } from "./models/services";
 
-const DEFAULT_CACHE_EXPIRATION_SECONDS = 300;
+const DEFAULT_CACHE_EXPIRATION_SECONDS = 3000;
 
 const SEM_VER_REG_EXP = /^\d+.\d+.\d+$/;
 

@@ -431,6 +431,48 @@ describe("Get Contents method call", () => {
     );
   });
 
+  it("GCS-02 - getContents deduplicates concurrent requests for same contentIds", async () => {
+    mockApiClient = mock<JoystickApiClient>();
+
+    when(() =>
+      mockApiClient.getDynamicContent(
+        ["same-content-id"],
+        It.isAny(),
+        It.isAny()
+      )
+    )
+      .thenResolve({
+        "same-content-id": createSampleApiResponse({
+          id: "item.1",
+        }),
+      })
+      .once();
+
+    const sut = new Joystick(
+      {
+        apiKey: "123",
+      },
+      { apiClient: mockApiClient }
+    );
+
+    const [result1, result2] = await Promise.all([
+      sut.getContents(["same-content-id"]),
+      sut.getContents(["same-content-id"]),
+    ]);
+
+    expect(result1).toEqual({
+      "same-content-id": {
+        id: "item.1",
+      },
+    });
+
+    expect(result2).toEqual({
+      "same-content-id": {
+        id: "item.1",
+      },
+    });
+  });
+
   it("default cacheExpirationSeconds", async () => {
     let sut = new Joystick({
       apiKey: "111312",

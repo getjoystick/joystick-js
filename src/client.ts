@@ -26,6 +26,10 @@ export class Joystick {
   private readonly apiClient: ApiClient;
   private readonly cache: SdkCache;
   private readonly logger: Logger;
+  private readonly inFlightContentByCacheKey = new Map<
+    string,
+    Promise<Record<string, ApiResponse>>
+  >();
 
   /**
    * Initializes the Joystick SDK with default values.
@@ -285,8 +289,13 @@ export class Joystick {
     let content = options?.refresh ? undefined : await this.cache.get(cacheKey);
 
     if (!content) {
-      try {
-        content = await this.apiClient.getDynamicContent(
+      const existingRequestContentPromise = options?.refresh
+        ? undefined
+        : this.inFlightContentByCacheKey.get(cacheKey);
+
+      const requestContentPromise =
+        existingRequestContentPromise ??
+        this.apiClient.getDynamicContent(
           contentIds,
           {
             params: this.getParams(),
@@ -295,6 +304,13 @@ export class Joystick {
           },
           this.getSerialized(options?.serialized) ? "serialized" : undefined
         );
+
+      if (!options?.refresh && !existingRequestContentPromise) {
+        this.inFlightContentByCacheKey.set(cacheKey, requestContentPromise);
+      }
+
+      try {
+        content = await requestContentPromise;
 
         await this.cache.set(cacheKey, content);
       } catch (e) {
@@ -317,6 +333,13 @@ export class Joystick {
         }
 
         throw e;
+      } finally {
+        if (
+          !options?.refresh &&
+          this.inFlightContentByCacheKey.get(cacheKey) === requestContentPromise
+        ) {
+          this.inFlightContentByCacheKey.delete(cacheKey);
+        }
       }
     }
 
